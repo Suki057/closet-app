@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=21">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F4C24E">
 <meta name="mobile-web-app-capable" content="yes">
@@ -92,25 +92,6 @@
         </div>
       </div>
 
-      <!-- 概览统计 -->
-      <div class="home-stats" id="home-stats">
-        <button class="stat-card" data-goto="wardrobe">
-          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>
-          <span class="stat-num" id="stat-items">0</span>
-          <span class="stat-label">件单品</span>
-        </button>
-        <button class="stat-card" data-goto="studio">
-          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 8 C34 26 38 30 56 32 C38 34 34 38 32 56 C30 38 26 34 8 32 C26 30 30 26 32 8 Z" fill="currentColor"/></svg></span>
-          <span class="stat-num" id="stat-looks">0</span>
-          <span class="stat-label">套搭配</span>
-        </button>
-        <button class="stat-card" data-goto="wardrobe">
-          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M14 16 H44 L52 32 L44 48 H14 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="32" r="3.5" fill="currentColor" stroke="none"/></svg></span>
-          <span class="stat-num" id="stat-cats">0</span>
-          <span class="stat-label">个类目</span>
-        </button>
-      </div>
-
       <!-- 最近导入 -->
       <section class="home-section" id="home-recent-section">
         <div class="home-section-head">
@@ -148,6 +129,25 @@
       <svg class="pdeco pd-bag" viewBox="0 0 64 64"><path d="M16 27 H48 L45 55 H19 Z" fill="#E9DCF5" stroke="#F4C24E" stroke-width="2.6" stroke-linejoin="round"/><path d="M24 27 V21 a8 8 0 0 1 16 0 V27" fill="none" stroke="#F4C24E" stroke-width="3.2" stroke-linecap="round"/></svg>
       <span class="pdeco pd-star"></span>
     </div>
+    <!-- 概览统计：移到衣橱分类顶部，一行紧凑小盒，两端对齐 -->
+    <div class="wardrobe-stats" id="wardrobe-stats">
+      <button class="stat-card" data-goto="wardrobe">
+        <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>
+        <span class="stat-num" id="stat-items">0</span>
+        <span class="stat-label">件单品</span>
+      </button>
+      <button class="stat-card" data-goto="studio">
+        <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 8 C34 26 38 30 56 32 C38 34 34 38 32 56 C30 38 26 34 8 32 C26 30 30 26 32 8 Z" fill="currentColor"/></svg></span>
+        <span class="stat-num" id="stat-looks">0</span>
+        <span class="stat-label">套搭配</span>
+      </button>
+      <button class="stat-card" data-goto="wardrobe">
+        <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M14 16 H44 L52 32 L44 48 H14 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="32" r="3.5" fill="currentColor" stroke="none"/></svg></span>
+        <span class="stat-num" id="stat-cats">0</span>
+        <span class="stat-label">个类目</span>
+      </button>
+    </div>
+
     <div class="wardrobe-head">
       <div class="cat-rail" id="wardrobe-cats"></div>
       <div class="sub-rail" id="wardrobe-subs" hidden></div>
