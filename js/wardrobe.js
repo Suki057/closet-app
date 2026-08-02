@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, editing: null, editingSub: null };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, editing: null, editingSub: null, sortMode: false };
 
   var el = {};
 
@@ -19,13 +19,21 @@
     });
   }
 
+  function sortArrows(idx, total) {
+    if (!state.sortMode || total <= 1) return '';
+    var up = idx > 0 ? '<span class="sort-arrow" data-move="up" title="前移">▲</span>' : '<span class="sort-arrow is-disabled">▲</span>';
+    var down = idx < total - 1 ? '<span class="sort-arrow" data-move="down" title="后移">▼</span>' : '<span class="sort-arrow is-disabled">▼</span>';
+    return '<span class="sort-arrows">' + up + down + '</span>';
+  }
+
   function renderCats() {
     var counts = CL.store.countBy();
+    var total = CL.catalog.CATEGORIES.length;
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
-    CL.catalog.CATEGORIES.forEach(function (c) {
-      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '" title="双击修改名称">' +
-        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
+    CL.catalog.CATEGORIES.forEach(function (c, idx) {
+      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + (state.sortMode ? ' is-sort' : '') + '" data-cat="' + c.id + '" title="双击修改名称">' +
+        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span>' + sortArrows(idx, total) + '</button>';
     });
     el.cats.innerHTML = html;
     renderSubs();
@@ -147,15 +155,34 @@
     el.grid = $('wardrobe-grid');
     el.empty = $('wardrobe-empty');
 
+    function moveCategory(id, dir) {
+      var cats = CL.catalog.CATEGORIES;
+      var i = cats.findIndex(function (c) { return c.id === id; });
+      if (i < 0) return;
+      var j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= cats.length) return;
+      var tmp = cats[i]; cats[i] = cats[j]; cats[j] = tmp;
+      CL.catalog.setCategoryOrder(cats.map(function (c) { return c.id; }));
+      render();
+    }
+
     el.cats.addEventListener('click', function (e) {
+      var arrow = e.target.closest('[data-move]');
+      if (arrow) {
+        e.stopPropagation();
+        var b = e.target.closest('.chip[data-cat]');
+        if (b) moveCategory(b.dataset.cat, arrow.dataset.move);
+        return;
+      }
       var b = e.target.closest('.chip');
-      if (!b || b.id === 'btn-add-cat') return;
+      if (!b || b.id === 'btn-add-cat' || b.id === 'btn-sort-cat') return;
       state.cat = b.dataset.cat;
       state.sub = null;
       render();
     });
 
     el.cats.addEventListener('dblclick', function (e) {
+      if (e.target.closest('[data-move]')) return;
       var b = e.target.closest('.chip');
       if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
       var c = CL.catalog.get(b.dataset.cat);
@@ -172,6 +199,12 @@
         CL.catalog.addCategory(name.trim());
         render();
       }
+    });
+
+    $('btn-sort-cat').addEventListener('click', function (e) {
+      state.sortMode = !state.sortMode;
+      e.currentTarget.classList.toggle('is-on', state.sortMode);
+      render();
     });
 
     if (el.subs) el.subs.addEventListener('click', function (e) {

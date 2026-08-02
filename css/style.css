@@ -174,6 +174,14 @@ button{cursor:pointer;border:none;background:none}
   width:6px;height:6px;border-radius:50%;background:var(--accent);
 }
 .chip.is-active.has-worn::after{background:#fff}
+.chip.is-sort{padding-right:6px}
+.sort-arrows{display:inline-flex;flex-direction:column;gap:0;margin-left:4px;line-height:1}
+.sort-arrow{
+  font-size:9px;color:var(--ink-3);cursor:pointer;padding:1px 3px;border-radius:3px;
+  -webkit-text-stroke:.2px currentColor;
+}
+.sort-arrow:hover{color:var(--accent-ink);background:rgba(255,79,163,.12)}
+.sort-arrow.is-disabled{color:var(--line-strong);cursor:default;background:transparent}
 
 /* ---------------- wardrobe ---------------- */
 .wardrobe-head{
@@ -260,6 +268,8 @@ button{cursor:pointer;border:none;background:none}
 .studio-cat-card .ico{width:32px;height:32px;color:var(--accent-ink)}
 .studio-cat-card .cat-title{font-size:13px;font-weight:600}
 .studio-cat-card .cat-count{font-size:11px;color:var(--ink-3)}
+.studio-cat-looks{background:linear-gradient(160deg,#FFF1F8,#FFE0F0)}
+.studio-cat-looks .ico{filter:drop-shadow(0 2px 2px rgba(255,79,163,.25))}
 .studio-item-panel{display:flex;flex-direction:column;gap:12px}
 .studio-picker-back{align-self:flex-start}
 .studio-item-grid{
@@ -283,6 +293,9 @@ button{cursor:pointer;border:none;background:none}
   font-size:10px;color:#fff;background:var(--active-bg);
   padding:1px 6px;border-radius:999px;font-weight:600;letter-spacing:.05em;
 }
+.studio-pick-look{aspect-ratio:auto;flex-direction:column;gap:6px;padding:8px 8px 10px}
+.studio-pick-look img{height:86px;width:86px;object-fit:cover;border-radius:8px;background:#fff}
+.studio-pick-look .pick-name{font-size:11px;color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .preview-head h2{font-size:16px}
@@ -527,7 +540,7 @@ button{cursor:pointer;border:none;background:none}
 /* ---------------- home ---------------- */
 .home{max-width:1180px;margin:0 auto;padding:34px 24px 68px;animation:fade .24s ease}
 .home-hero{
-  display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center;
+  display:grid;grid-template-columns:1fr;align-items:center;
   background:linear-gradient(160deg,#FFFFFF,#FFF1F8);
   border:1px solid var(--line);border-radius:20px;
   padding:42px 44px;box-shadow:var(--shadow-1);overflow:hidden;position:relative;
@@ -543,21 +556,8 @@ button{cursor:pointer;border:none;background:none}
 .hero-sub{margin-top:16px;font-size:14.5px;color:var(--ink-2);max-width:440px;padding-left:22px;line-height:1.7}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;padding-left:22px}
 
-.hero-art{
-  position:relative;height:220px;border-radius:14px;
-  background:radial-gradient(circle at 50% 42%,#fff,#FBE5F2);
-  border:1px solid var(--line);
-  display:flex;flex-wrap:wrap;gap:13px;align-content:center;justify-content:center;padding:22px;
-}
-.hero-badge{
-  width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
-  background:#fff;box-shadow:var(--shadow-1);color:var(--accent-ink);
-  animation:floaty 6s ease-in-out infinite;animation-delay:calc(var(--i) * -.55s);
-}
-.hero-badge .ico{width:22px;height:22px}
-@keyframes floaty{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
-
 .home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
 .stat-card{
   text-align:left;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow-1);
@@ -571,39 +571,12 @@ button{cursor:pointer;border:none;background:none}
 .home-section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .home-section-head h2{font-size:19px;letter-spacing:.02em}
 
-.home-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.home-cat-block{
-  background:var(--surface);border:1px solid var(--line);border-radius:14px;
-  padding:12px 14px;box-shadow:var(--shadow-1);transition:.16s;
-}
-.home-cat-block:hover{border-color:var(--accent);transform:translateY(-2px)}
-.home-cat-head{
-  display:flex;align-items:center;gap:10px;width:100%;
-  background:none;border:0;padding:2px 0;cursor:pointer;color:var(--ink-2);
-}
-.home-cat-head .ico{width:20px;height:20px;color:var(--accent-ink)}
-.home-cat-name{font-size:15px;font-weight:600;font-family:var(--serif);color:var(--ink)}
-.home-cat-n{margin-left:auto;font-size:18px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;font-family:var(--serif)}
-.home-cat-block.is-zero{opacity:.55}
-.home-cat-block.is-zero .home-cat-n{color:var(--ink-3)}
-.home-subs{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
-.home-sub{
-  display:inline-flex;align-items:center;gap:5px;
-  height:28px;padding:0 11px;border-radius:9px;
-  background:var(--bg);border:1px solid var(--line);color:var(--ink-2);
-  font-size:12.5px;cursor:pointer;transition:.14s;
-}
-.home-sub:hover{border-color:var(--accent);color:var(--ink)}
-.home-sub-n{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.home-sub-none{font-size:12px;color:var(--ink-3)}
-
 .home-empty-tip{margin-top:10px;font-size:12px;color:var(--ink-3)}
 
 @media (max-width:760px){
   .home{padding:20px 14px 54px}
-  .home-hero{grid-template-columns:1fr;padding:30px 24px}
+  .home-hero{padding:30px 24px}
   .hero-title{font-size:30px}
-  .hero-art{height:180px;order:-1}
   .home-stats{grid-template-columns:1fr 1fr}
   .page-deco{display:none}
 }
@@ -658,9 +631,7 @@ button{cursor:pointer;border:none;background:none}
 .modal-card,
 .modal-head,
 .modal-foot,
-.home-cat-block,
 .stat-card,
-.hero-art,
 .chip,
 .sub-chip,
 .cat-opt,
@@ -732,8 +703,7 @@ button{cursor:pointer;border:none;background:none}
     inset 0 0 0 1px rgba(255,255,255,.65),
     0 18px 42px rgba(214,120,170,.14);
 }
-.stat-card:hover,
-.home-cat-block:hover{
+.stat-card:hover{
   border-color:var(--glass-edge);
   transform:translateY(-2px);
   box-shadow:
@@ -864,7 +834,6 @@ button{cursor:pointer;border:none;background:none}
   .wardrobe-head{gap:10px}
   .ward-tools .search{flex:1}
   .ward-tools .search input{width:100%;min-width:120px}
-  .home-cats{grid-template-columns:1fr 1fr}
   .home-hero{padding:26px 20px}
   .hero-title{font-size:26px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}

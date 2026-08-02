@@ -92,20 +92,33 @@
   var MAP = {};
   CATEGORIES.forEach(function (c) { MAP[c.id] = c; });
 
-  /* 用户自定义类目与重命名持久化 */
-  var CUSTOM = { renames: {}, custom: [] };
-  function loadCustom() {
-    try {
-      var raw = localStorage.getItem('CL.catalog.custom');
-      if (raw) CUSTOM = JSON.parse(raw);
-    } catch (e) {}
-  }
-  function saveCustom() {
-    try { localStorage.setItem('CL.catalog.custom', JSON.stringify(CUSTOM)); } catch (e) {}
-  }
-  loadCustom();
-  CATEGORIES.forEach(function (c) { if (CUSTOM.renames[c.id]) c.name = CUSTOM.renames[c.id]; });
-  CUSTOM.custom.forEach(function (c) { if (c && c.id && !MAP[c.id]) { CATEGORIES.push(c); MAP[c.id] = c; } });
+/* 用户自定义类目与重命名持久化 */
+var CUSTOM = { renames: {}, custom: [], order: [] };
+function loadCustom() {
+  try {
+    var raw = localStorage.getItem('CL.catalog.custom');
+    if (raw) CUSTOM = JSON.parse(raw);
+  } catch (e) {}
+}
+function saveCustom() {
+  try { localStorage.setItem('CL.catalog.custom', JSON.stringify(CUSTOM)); } catch (e) {}
+}
+loadCustom();
+CATEGORIES.forEach(function (c) { if (CUSTOM.renames[c.id]) c.name = CUSTOM.renames[c.id]; });
+CUSTOM.custom.forEach(function (c) { if (c && c.id && !MAP[c.id]) { CATEGORIES.push(c); MAP[c.id] = c; } });
+
+/* 应用用户自定义排序 */
+if (CUSTOM.order && CUSTOM.order.length) {
+  var orderMap = {};
+  CUSTOM.order.forEach(function (id, i) { orderMap[id] = i; });
+  CATEGORIES.sort(function (a, b) {
+    var ia = orderMap[a.id], ib = orderMap[b.id];
+    if (ia === undefined && ib === undefined) return 0;
+    if (ia === undefined) return 1;
+    if (ib === undefined) return -1;
+    return ia - ib;
+  });
+}
 
   function get(id) { return MAP[id] || MAP.top; }
   function name(id) { return (MAP[id] || {}).name || '其它'; }
@@ -137,8 +150,25 @@
     };
     CATEGORIES.push(c); MAP[id] = c;
     CUSTOM.custom.push(c);
+    CUSTOM.order.push(id);
     saveCustom();
     return c;
+  }
+
+  function setCategoryOrder(ids) {
+    if (!Array.isArray(ids) || !ids.length) return false;
+    var orderMap = {};
+    ids.forEach(function (id, i) { orderMap[id] = i; });
+    CATEGORIES.sort(function (a, b) {
+      var ia = orderMap[a.id], ib = orderMap[b.id];
+      if (ia === undefined && ib === undefined) return 0;
+      if (ia === undefined) return 1;
+      if (ib === undefined) return -1;
+      return ia - ib;
+    });
+    CUSTOM.order = ids.slice();
+    saveCustom();
+    return true;
   }
 
   /**
@@ -206,7 +236,8 @@
     CATEGORIES: CATEGORIES, get: get, name: name, guess: guess,
     subsOf: subsOf, subName: subName,
     addCategory: addCategory, renameCategory: renameCategory,
-    ids: CATEGORIES.map(function (c) { return c.id; }),
+    setCategoryOrder: setCategoryOrder,
+    ids: function () { return CATEGORIES.map(function (c) { return c.id; }); },
     ALL_ICON: P.all
   };
 })(window);

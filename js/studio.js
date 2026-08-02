@@ -5,7 +5,8 @@
   var CL = global.CL;
   var el = {};
   var state = { cat: 'top', layers: [], sel: null, showMannequin: true };
-  var picker = { view: 'cats', cat: null, selected: {} };
+  var picker = { view: 'cats', cat: null, selected: {}, selectedLooks: {} };
+  var LOOKS_CAT = '__looks';
   var drag = null;
   var mayOpen = false;
 
@@ -48,6 +49,13 @@
     state.layers.push({
       id: CL.uid('ly'), itemId: itemId, cat: it.category, slot: slot,
       x: a.x, y: a.y + offset, w: a.w, z: cat.z
+    });
+  }
+
+  function wearLook(look) {
+    if (!look || !look.layers) return;
+    look.layers.forEach(function (l) {
+      if (CL.store.getItem(l.itemId)) wearOne(l.itemId);
     });
   }
 
@@ -103,6 +111,7 @@
     picker.view = 'cats';
     picker.cat = null;
     picker.selected = {};
+    picker.selectedLooks = {};
     renderPicker();
     CL.ui.openModal('studio-picker-modal');
   }
@@ -112,7 +121,7 @@
   }
 
   function selectedCount() {
-    return Object.keys(picker.selected).length;
+    return Object.keys(picker.selected).length + Object.keys(picker.selectedLooks).length;
   }
 
   function renderPicker() {
@@ -127,7 +136,7 @@
 
   function renderPickerCats() {
     var counts = CL.store.countBy();
-    el.pickerCats.innerHTML = CL.catalog.CATEGORIES.map(function (c) {
+    var html = CL.catalog.CATEGORIES.map(function (c) {
       var n = counts[c.id] || 0;
       return '<button class="studio-cat-card" data-cat="' + c.id + '"' + (n ? '' : ' disabled') + '>' +
         icon(c.icon) +
@@ -135,10 +144,31 @@
         '<span class="cat-count">' + n + ' 件</span>' +
         '</button>';
     }).join('');
+    var looks = CL.store.looks();
+    html += '<button class="studio-cat-card studio-cat-looks" data-cat="' + LOOKS_CAT + '"' + (looks.length ? '' : ' disabled') + '>' +
+      icon('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z') +
+      '<span class="cat-title">搭配集</span>' +
+      '<span class="cat-count">' + looks.length + ' 套</span>' +
+      '</button>';
+    el.pickerCats.innerHTML = html;
   }
 
   function renderPickerItems() {
     var catId = picker.cat;
+    if (catId === LOOKS_CAT) {
+      var looks = CL.store.looks();
+      el.pickerItemsGrid.innerHTML = looks.map(function (lk) {
+        var isSel = !!picker.selectedLooks[lk.id];
+        return '<button class="studio-pick studio-pick-look' + (isSel ? ' is-sel' : '') + '" data-look-id="' + lk.id + '" title="' + esc(lk.name) + '">' +
+          '<img src="' + (lk.coverUrl || lk.thumbUrl || '') + '" alt="' + esc(lk.name) + '" loading="lazy">' +
+          '<span class="pick-name">' + esc(lk.name) + '</span></button>';
+      }).join('');
+      if (!looks.length) {
+        el.pickerItemsGrid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:40px 0"><p>还没有保存的搭配</p>' +
+          '<button class="btn btn-soft btn-sm" data-action="goto-looks" style="margin-top:10px">去搭配集</button></div>';
+      }
+      return;
+    }
     var list = CL.store.itemsOf(catId);
     var wornIds = {};
     state.layers.forEach(function (l) { wornIds[l.itemId] = true; });
@@ -155,9 +185,14 @@
 
   function updatePickerFoot() {
     if (picker.view === 'cats') {
-      el.pickerHint.textContent = selectedCount() ? '已选 ' + selectedCount() + ' 件' : '点击分类进入选择';
+      el.pickerHint.textContent = selectedCount() ? '已选 ' + selectedCount() + ' 件/套' : '点击分类进入选择';
       el.pickerConfirm.textContent = '确认搭配';
       el.pickerConfirm.disabled = selectedCount() === 0;
+    } else if (picker.cat === LOOKS_CAT) {
+      var n = Object.keys(picker.selectedLooks).length;
+      el.pickerHint.textContent = '本类已选 ' + n + ' 套';
+      el.pickerConfirm.textContent = '确认';
+      el.pickerConfirm.disabled = false;
     } else {
       var n = Object.keys(picker.selected).filter(function (id) {
         var it = CL.store.getItem(id); return it && it.category === picker.cat;
@@ -179,8 +214,13 @@
   function onPickerItemClick(e) {
     var b = e.target.closest('.studio-pick');
     if (!b) return;
-    var id = b.dataset.id;
-    if (picker.selected[id]) delete picker.selected[id]; else picker.selected[id] = true;
+    if (b.dataset.lookId) {
+      var lid = b.dataset.lookId;
+      if (picker.selectedLooks[lid]) delete picker.selectedLooks[lid]; else picker.selectedLooks[lid] = true;
+    } else {
+      var id = b.dataset.id;
+      if (picker.selected[id]) delete picker.selected[id]; else picker.selected[id] = true;
+    }
     renderPickerItems();
     updatePickerFoot();
   }
@@ -192,6 +232,10 @@
       return;
     }
     Object.keys(picker.selected).forEach(function (id) { wearOne(id); });
+    Object.keys(picker.selectedLooks).forEach(function (id) {
+      var look = CL.store.looks().find(function (l) { return l.id === id; });
+      if (look) wearLook(look);
+    });
     state.sel = null;
     renderAll();
     closePicker();
@@ -443,6 +487,9 @@
       // 弹窗内「去添加」触发文件选择
       var add = e.target.closest('[data-action="add"]');
       if (add) { closePicker(); var fi = $('file-input'); if (fi) fi.click(); }
+      // 搭配集空状态跳转
+      var gotoLooks = e.target.closest('[data-action="goto-looks"]');
+      if (gotoLooks) { closePicker(); CL.app.go('looks'); }
     });
 
     CL.store.on('items', function () {

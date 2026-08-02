@@ -1,23 +1,13 @@
-/* 首页：欢迎区 + 概览统计 + 衣橱构成 + 最近导入 + 空状态引导 */
+/* 首页：欢迎区 + 概览统计 + 最近导入 + 空状态引导 */
 (function (global) {
   'use strict';
 
   var CL = global.CL;
   function $(id) { return document.getElementById(id); }
-  function icon(path) {
-    return '<svg viewBox="0 0 24 24" class="ico"><path d="' + path + '"/></svg>';
-  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
     });
-  }
-
-  function renderHeroArt() {
-    var html = CL.catalog.CATEGORIES.map(function (c, idx) {
-      return '<span class="hero-badge" style="--i:' + idx + '">' + icon(c.icon) + '</span>';
-    }).join('');
-    $('hero-art').innerHTML = html;
   }
 
   function render() {
@@ -48,8 +38,6 @@
   }
 
   function init() {
-    renderHeroArt();
-
     $('home-recent').addEventListener('click', function (e) {
       var card = e.target.closest('.card');
       if (!card) return;

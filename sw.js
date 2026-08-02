@@ -1,5 +1,5 @@
 /* 衣橱 · Closet — Service Worker：应用壳缓存，支持离线打开与「添加到主屏幕」 */
-var CACHE = 'closet-v2';
+var CACHE = 'closet-v3';
 var PRECACHE = ['./', 'index.html', 'manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
