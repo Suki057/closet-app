@@ -24,8 +24,8 @@
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
     CL.catalog.CATEGORIES.forEach(function (c) {
-      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '">' +
-        icon(c.icon) + esc(c.name) + '<span class="n">' + (counts[c.id] || 0) + '</span></button>';
+      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '" title="双击修改名称">' +
+        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
     });
     el.cats.innerHTML = html;
     renderSubs();
@@ -149,10 +149,29 @@
 
     el.cats.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
-      if (!b) return;
+      if (!b || b.id === 'btn-add-cat') return;
       state.cat = b.dataset.cat;
       state.sub = null;
       render();
+    });
+
+    el.cats.addEventListener('dblclick', function (e) {
+      var b = e.target.closest('.chip');
+      if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
+      var c = CL.catalog.get(b.dataset.cat);
+      var name = window.prompt('修改分类名称：', c.name);
+      if (name && name.trim()) {
+        CL.catalog.renameCategory(c.id, name.trim());
+        render();
+      }
+    });
+
+    $('btn-add-cat').addEventListener('click', function () {
+      var name = window.prompt('新增一级分类名称（如：外套、上衣）：');
+      if (name && name.trim()) {
+        CL.catalog.addCategory(name.trim());
+        render();
+      }
     });
 
     if (el.subs) el.subs.addEventListener('click', function (e) {

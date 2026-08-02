@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=17">
+<link rel="stylesheet" href="css/style.css?v=18">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FF4FA3">
 <meta name="mobile-web-app-capable" content="yes">
@@ -109,15 +109,6 @@
         </button>
       </div>
 
-      <!-- 衣橱构成 -->
-      <section class="home-section" id="home-cat-section">
-        <div class="home-section-head">
-          <h2><span class="sec-ico"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>衣橱构成</h2>
-          <button class="link-btn" data-goto="wardrobe">查看全部 →</button>
-        </div>
-        <div class="home-cats" id="home-cats"></div>
-      </section>
-
       <!-- 最近导入 -->
       <section class="home-section" id="home-recent-section">
         <div class="home-section-head">
@@ -167,6 +158,7 @@
           <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
           收藏
         </button>
+        <button class="chip" id="btn-add-cat" title="添加分类">+ 添加分类</button>
       </div>
     </div>
 
@@ -194,26 +186,7 @@
   <section class="view" id="view-studio">
     <div class="studio">
 
-      <!-- 左：选品 -->
-      <div class="picker">
-        <div class="picker-head">
-          <h2>选择单品</h2>
-          <p class="hint">点类目查看，点单品即刻上身 →</p>
-        </div>
-        <div class="cat-rail cat-rail-studio" id="studio-cats"></div>
-        <div class="picker-bar">
-          <span class="picker-count" id="picker-count"></span>
-          <button class="link-btn" id="btn-take-off" hidden>脱下该类目</button>
-        </div>
-        <div class="picker-grid" id="picker-grid"></div>
-        <div class="picker-empty" id="picker-empty" hidden>
-          <span class="pdeco pd-pick"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>
-          <p>这个类目还没有单品</p>
-          <button class="btn btn-soft btn-sm" data-action="add">去添加</button>
-        </div>
-      </div>
-
-      <!-- 右：预览 -->
+      <!-- 预览/搭配区 -->
       <div class="preview">
         <div class="preview-head">
           <h2>搭配预览</h2>
@@ -288,6 +261,31 @@
   </section>
 
 </main>
+
+<!-- ============ 搭配间选品弹窗 ============ -->
+<div class="modal" id="studio-picker-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-studio-picker">
+    <div class="modal-head">
+      <h3>选择搭配单品</h3>
+      <button class="icon-btn" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body studio-picker-body">
+      <div class="studio-cat-grid" id="studio-picker-cats"></div>
+      <div class="studio-item-panel" id="studio-picker-items" hidden>
+        <button class="link-btn studio-picker-back" id="studio-picker-back">← 返回分类</button>
+        <div class="studio-item-grid" id="studio-picker-items-grid"></div>
+      </div>
+    </div>
+    <div class="modal-foot" id="studio-picker-foot">
+      <span class="hint" id="studio-picker-hint"></span>
+      <div class="foot-right">
+        <button class="btn btn-soft" data-close>取消</button>
+        <button class="btn btn-primary" id="studio-picker-confirm">确认搭配</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ============ 导入面板 ============ -->
 <div class="modal" id="import-modal" hidden>
@@ -466,14 +464,14 @@
 
 <script src="js/db.js?v=5"></script>
 <script src="js/color.js"></script>
-<script src="js/catalog.js?v=1"></script>
+<script src="js/catalog.js?v=2"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=6"></script>
-<script src="js/wardrobe.js?v=3"></script>
-<script src="js/studio.js"></script>
+<script src="js/wardrobe.js?v=4"></script>
+<script src="js/studio.js?v=1"></script>
 <script src="js/looks.js"></script>
-<script src="js/home.js?v=1"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/home.js?v=2"></script>
+<script src="js/app.js?v=10"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

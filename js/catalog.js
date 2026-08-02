@@ -12,7 +12,8 @@
     bag:  'M4.6 8.2h14.8l1.1 12.4H3.5z M8.6 8.2V6.4a3.4 3.4 0 0 1 6.8 0v1.8',
     hat:  'M6.4 15.4C6.4 9.4 8.6 3.4 12 3.4s5.6 6 5.6 12 M2.5 16.2c0 2 4.2 3.4 9.5 3.4s9.5-1.4 9.5-3.4-4.2-3-9.5-3-9.5 1-9.5 3z',
     acc:  'M5.4 5.6c0 6.4 2.9 9.6 6.6 9.6s6.6-3.2 6.6-9.6 M12 15.2v2.2 M12 21.4a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
-    all:  'M4 6.5h16 M4 12h16 M4 17.5h16'
+    all:  'M4 6.5h16 M4 12h16 M4 17.5h16',
+    custom: 'M12 3l2.4 7.4H22l-6 4.4 2.3 7.2-6-4.4-6 4.4 2.3-7.2-6-4.4h7.6z'
   };
 
   /* z: 叠放层级；slot: 同槽位互斥；anchor: 人台上的默认位置（百分比）
@@ -91,6 +92,21 @@
   var MAP = {};
   CATEGORIES.forEach(function (c) { MAP[c.id] = c; });
 
+  /* 用户自定义类目与重命名持久化 */
+  var CUSTOM = { renames: {}, custom: [] };
+  function loadCustom() {
+    try {
+      var raw = localStorage.getItem('CL.catalog.custom');
+      if (raw) CUSTOM = JSON.parse(raw);
+    } catch (e) {}
+  }
+  function saveCustom() {
+    try { localStorage.setItem('CL.catalog.custom', JSON.stringify(CUSTOM)); } catch (e) {}
+  }
+  loadCustom();
+  CATEGORIES.forEach(function (c) { if (CUSTOM.renames[c.id]) c.name = CUSTOM.renames[c.id]; });
+  CUSTOM.custom.forEach(function (c) { if (c && c.id && !MAP[c.id]) { CATEGORIES.push(c); MAP[c.id] = c; } });
+
   function get(id) { return MAP[id] || MAP.top; }
   function name(id) { return (MAP[id] || {}).name || '其它'; }
   function subsOf(id) { var c = MAP[id]; return (c && c.subs) ? c.subs : []; }
@@ -99,6 +115,30 @@
     var subs = subsOf(catId);
     for (var i = 0; i < subs.length; i++) if (subs[i].id === subId) return subs[i].name;
     return subId;
+  }
+
+  function renameCategory(id, name) {
+    var c = MAP[id];
+    if (!c || !name) return false;
+    c.name = name.trim();
+    CUSTOM.renames[id] = c.name;
+    saveCustom();
+    return true;
+  }
+
+  function addCategory(name) {
+    name = String(name || '').trim();
+    if (!name) return null;
+    var id = 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    var ref = get('top');
+    var c = {
+      id: id, name: name, icon: P.custom, slot: 'top', z: 30,
+      anchor: { x: ref.anchor.x, y: ref.anchor.y, w: ref.anchor.w }, subs: []
+    };
+    CATEGORIES.push(c); MAP[id] = c;
+    CUSTOM.custom.push(c);
+    saveCustom();
+    return c;
   }
 
   /**
@@ -165,6 +205,7 @@
   global.CL.catalog = {
     CATEGORIES: CATEGORIES, get: get, name: name, guess: guess,
     subsOf: subsOf, subName: subName,
+    addCategory: addCategory, renameCategory: renameCategory,
     ids: CATEGORIES.map(function (c) { return c.id; }),
     ALL_ICON: P.all
   };

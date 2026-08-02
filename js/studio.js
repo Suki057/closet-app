@@ -1,11 +1,13 @@
-/* 搭配间：左侧选品 + 右侧人台实时叠穿，类目与预览双向联动 */
+/* 搭配间：人台居中，点击人台弹出分类选品弹窗，支持跨类目多选后确认上身 */
 (function (global) {
   'use strict';
 
   var CL = global.CL;
   var el = {};
   var state = { cat: 'top', layers: [], sel: null, showMannequin: true };
+  var picker = { view: 'cats', cat: null, selected: {} };
   var drag = null;
+  var mayOpen = false;
 
   function $(id) { return document.getElementById(id); }
   var esc = function (s) { return CL.wardrobe.esc(s); };
@@ -32,32 +34,27 @@
     });
   }
 
-  /** 穿上 / 再次点击则脱下 */
-  function wear(itemId) {
+  /** 非切换地穿上一件：用于弹窗批量确认 */
+  function wearOne(itemId) {
     var it = CL.store.getItem(itemId);
-    if (!it) return;
-    var exist = findLayerByItem(itemId);
-    if (exist) { removeLayer(exist.id); renderAll(); return; }
-
+    if (!it || findLayerByItem(itemId)) return;
     var cat = CL.catalog.get(it.category);
     var slot = cat.slot;
-
     if (!cat.multi) clearSlot(slot);
-    // 连衣裙与下装互斥
     if (it.category === 'dress') clearSlot('bottom');
-    if (slot === 'bottom') {
-      state.layers = state.layers.filter(function (l) { return l.cat !== 'dress'; });
-    }
-
+    if (slot === 'bottom') state.layers = state.layers.filter(function (l) { return l.cat !== 'dress'; });
     var a = cat.anchor;
     var offset = cat.multi ? state.layers.filter(function (l) { return l.slot === slot; }).length * 4 : 0;
     state.layers.push({
-      id: CL.uid('ly'),
-      itemId: itemId,
-      cat: it.category,
-      slot: slot,
+      id: CL.uid('ly'), itemId: itemId, cat: it.category, slot: slot,
       x: a.x, y: a.y + offset, w: a.w, z: cat.z
     });
+  }
+
+  /** 点已穿单品则脱下，未穿则穿上（旧入口/衣橱「加入搭配」） */
+  function wear(itemId) {
+    var exist = findLayerByItem(itemId);
+    if (exist) removeLayer(exist.id); else wearOne(itemId);
     state.sel = null;
     renderAll();
   }
@@ -68,33 +65,6 @@
   }
 
   /* ---------------- 渲染 ---------------- */
-
-  function renderCats() {
-    var counts = CL.store.countBy();
-    var wornCats = {};
-    state.layers.forEach(function (l) { wornCats[l.cat] = true; });
-    el.cats.innerHTML = CL.catalog.CATEGORIES.map(function (c) {
-      return '<button class="chip' + (state.cat === c.id ? ' is-active' : '') +
-        (wornCats[c.id] ? ' has-worn' : '') + '" data-cat="' + c.id + '">' +
-        icon(c.icon) + esc(c.name) + '<span class="n">' + (counts[c.id] || 0) + '</span></button>';
-    }).join('');
-  }
-
-  function renderPicker() {
-    var list = CL.store.itemsOf(state.cat);
-    var wornIds = {};
-    state.layers.forEach(function (l) { wornIds[l.itemId] = true; });
-
-    el.pickerEmpty.hidden = list.length > 0;
-    el.count.textContent = list.length ? CL.catalog.name(state.cat) + ' · ' + list.length + ' 件' : '';
-    var hasWornInCat = state.layers.some(function (l) { return l.cat === state.cat; });
-    el.takeOff.hidden = !hasWornInCat;
-
-    el.grid.innerHTML = list.map(function (i) {
-      return '<button class="pick' + (wornIds[i.id] ? ' is-worn' : '') + '" data-id="' + i.id + '" title="' + esc(i.name) + '">' +
-        '<img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></button>';
-    }).join('');
-  }
 
   function renderStage() {
     var sorted = state.layers.slice().sort(function (a, b) { return a.z - b.z; });
@@ -107,27 +77,12 @@
     }).join('');
     el.mannequin.classList.toggle('hide', !state.showMannequin);
     el.toolbar.hidden = !state.sel;
-    renderGhost();
     renderWornStrip();
-  }
-
-  /** 当前类目为空位时，在人台上显示虚线占位，指明该类目会放在哪 */
-  function renderGhost() {
-    var c = CL.catalog.get(state.cat);
-    var occupied = state.layers.some(function (l) { return l.cat === state.cat; });
-    if (occupied) { el.ghost.hidden = true; return; }
-    var a = c.anchor;
-    el.ghost.hidden = false;
-    el.ghost.style.left = a.x + '%';
-    el.ghost.style.top = a.y + '%';
-    el.ghost.style.width = a.w + '%';
-    el.ghost.style.height = (a.w * 1.15) + '%';
-    el.ghost.querySelector('span').textContent = c.name;
   }
 
   function renderWornStrip() {
     if (!state.layers.length) {
-      el.worn.innerHTML = '<span class="hint">还没有穿上任何单品，点左边的单品试试</span>';
+      el.worn.innerHTML = '<span class="hint">点击人台方框，选择单品进行搭配</span>';
       return;
     }
     var sorted = state.layers.slice().sort(function (a, b) { return b.z - a.z; });
@@ -140,23 +95,120 @@
     }).join('');
   }
 
-  function renderAll() { renderCats(); renderPicker(); renderStage(); }
+  function renderAll() { renderStage(); }
 
-  function flashLayerOfCat(cat) {
-    var l = state.layers.find(function (x) { return x.cat === cat; });
-    if (!l) return;
-    var node = el.layers.querySelector('[data-ly="' + l.id + '"]');
-    if (!node) return;
-    node.classList.remove('flash');
-    void node.offsetWidth;
-    node.classList.add('flash');
+  /* ---------------- 分类弹窗 ---------------- */
+
+  function openPicker() {
+    picker.view = 'cats';
+    picker.cat = null;
+    picker.selected = {};
+    renderPicker();
+    CL.ui.openModal('studio-picker-modal');
+  }
+
+  function closePicker() {
+    CL.ui.closeModal('studio-picker-modal');
+  }
+
+  function selectedCount() {
+    return Object.keys(picker.selected).length;
+  }
+
+  function renderPicker() {
+    el.pickerCats.hidden = picker.view !== 'cats';
+    el.pickerItems.hidden = picker.view !== 'items';
+
+    if (picker.view === 'cats') renderPickerCats();
+    else renderPickerItems();
+
+    updatePickerFoot();
+  }
+
+  function renderPickerCats() {
+    var counts = CL.store.countBy();
+    el.pickerCats.innerHTML = CL.catalog.CATEGORIES.map(function (c) {
+      var n = counts[c.id] || 0;
+      return '<button class="studio-cat-card" data-cat="' + c.id + '"' + (n ? '' : ' disabled') + '>' +
+        icon(c.icon) +
+        '<span class="cat-title">' + esc(c.name) + '</span>' +
+        '<span class="cat-count">' + n + ' 件</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  function renderPickerItems() {
+    var catId = picker.cat;
+    var list = CL.store.itemsOf(catId);
+    var wornIds = {};
+    state.layers.forEach(function (l) { wornIds[l.itemId] = true; });
+    el.pickerItemsGrid.innerHTML = list.map(function (i) {
+      var isSel = !!picker.selected[i.id];
+      return '<button class="studio-pick' + (isSel ? ' is-sel' : '') + (wornIds[i.id] ? ' is-worn' : '') + '" data-id="' + i.id + '" title="' + esc(i.name) + '">' +
+        '<img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></button>';
+    }).join('');
+    if (!list.length) {
+      el.pickerItemsGrid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:40px 0"><p>这个类目还没有单品</p>' +
+        '<button class="btn btn-soft btn-sm" data-action="add" style="margin-top:10px">去添加</button></div>';
+    }
+  }
+
+  function updatePickerFoot() {
+    if (picker.view === 'cats') {
+      el.pickerHint.textContent = selectedCount() ? '已选 ' + selectedCount() + ' 件' : '点击分类进入选择';
+      el.pickerConfirm.textContent = '确认搭配';
+      el.pickerConfirm.disabled = selectedCount() === 0;
+    } else {
+      var n = Object.keys(picker.selected).filter(function (id) {
+        var it = CL.store.getItem(id); return it && it.category === picker.cat;
+      }).length;
+      el.pickerHint.textContent = '本类已选 ' + n + ' 件';
+      el.pickerConfirm.textContent = '确认';
+      el.pickerConfirm.disabled = false;
+    }
+  }
+
+  function onPickerCatClick(e) {
+    var card = e.target.closest('.studio-cat-card');
+    if (!card || card.disabled) return;
+    picker.cat = card.dataset.cat;
+    picker.view = 'items';
+    renderPicker();
+  }
+
+  function onPickerItemClick(e) {
+    var b = e.target.closest('.studio-pick');
+    if (!b) return;
+    var id = b.dataset.id;
+    if (picker.selected[id]) delete picker.selected[id]; else picker.selected[id] = true;
+    renderPickerItems();
+    updatePickerFoot();
+  }
+
+  function onPickerConfirm() {
+    if (picker.view === 'items') {
+      picker.view = 'cats';
+      renderPicker();
+      return;
+    }
+    Object.keys(picker.selected).forEach(function (id) { wearOne(id); });
+    state.sel = null;
+    renderAll();
+    closePicker();
+    if (selectedCount()) CL.ui.toast('已加入搭配');
   }
 
   /* ---------------- 拖拽与调整 ---------------- */
 
   function onPointerDown(e) {
     var node = e.target.closest('.layer');
-    if (!node) { state.sel = null; renderStage(); return; }
+    if (!node) {
+      state.sel = null;
+      renderStage();
+      mayOpen = true;
+      return;
+    }
+    mayOpen = false;
     var id = node.dataset.ly;
     var l = state.layers.find(function (x) { return x.id === id; });
     if (!l) return;
@@ -168,21 +220,26 @@
   }
 
   function onPointerMove(e) {
-    if (!drag) return;
-    var l = state.layers.find(function (x) { return x.id === drag.id; });
-    if (!l) return;
-    var dx = (e.clientX - drag.sx) / drag.w * 100;
-    var dy = (e.clientY - drag.sy) / drag.h * 100;
-    if (Math.abs(dx) + Math.abs(dy) > 0.4) drag.moved = true;
-    l.x = Math.max(2, Math.min(98, drag.ox + dx));
-    l.y = Math.max(-12, Math.min(96, drag.oy + dy));
-    var node = el.layers.querySelector('[data-ly="' + l.id + '"]');
-    if (node) { node.style.left = l.x + '%'; node.style.top = l.y + '%'; }
+    if (drag) {
+      var l = state.layers.find(function (x) { return x.id === drag.id; });
+      if (!l) return;
+      var dx = (e.clientX - drag.sx) / drag.w * 100;
+      var dy = (e.clientY - drag.sy) / drag.h * 100;
+      if (Math.abs(dx) + Math.abs(dy) > 0.4) drag.moved = true;
+      mayOpen = false;
+      l.x = Math.max(2, Math.min(98, drag.ox + dx));
+      l.y = Math.max(-12, Math.min(96, drag.oy + dy));
+      var node = el.layers.querySelector('[data-ly="' + l.id + '"]');
+      if (node) { node.style.left = l.x + '%'; node.style.top = l.y + '%'; }
+    } else if (mayOpen) {
+      mayOpen = false;
+    }
   }
 
   function onPointerUp(e) {
     if (drag) { try { el.stage.releasePointerCapture(e.pointerId); } catch (err) {} }
-    drag = null;
+    if (!drag && mayOpen) openPicker();
+    drag = null; mayOpen = false;
   }
 
   function adjust(act) {
@@ -223,10 +280,7 @@
     if (Math.random() < 0.4) chosen.push(pick('acc'));
 
     chosen.filter(Boolean).forEach(function (it) {
-      var c = CL.catalog.get(it.category), a = c.anchor;
-      if (!state.layers.some(function (l) { return l.itemId === it.id; })) {
-        state.layers.push({ id: CL.uid('ly'), itemId: it.id, cat: it.category, slot: c.slot, x: a.x, y: a.y, w: a.w, z: c.z });
-      }
+      if (!state.layers.some(function (l) { return l.itemId === it.id; })) wearOne(it.id);
     });
     renderAll();
     if (!state.layers.length) CL.ui.toast('衣橱里还没有单品');
@@ -332,44 +386,19 @@
   /* ---------------- 初始化 ---------------- */
 
   function init() {
-    el.cats = $('studio-cats');
-    el.grid = $('picker-grid');
-    el.pickerEmpty = $('picker-empty');
-    el.count = $('picker-count');
-    el.takeOff = $('btn-take-off');
     el.stage = $('stage');
     el.layers = $('layers');
     el.mannequin = $('mannequin');
-    el.ghost = $('ghost-slot');
     el.toolbar = $('item-toolbar');
     el.worn = $('worn-strip');
 
-    el.cats.addEventListener('click', function (e) {
-      var b = e.target.closest('.chip');
-      if (!b) return;
-      state.cat = b.dataset.cat;
-      renderCats(); renderPicker(); renderGhost();
-      flashLayerOfCat(state.cat);
-    });
-
-    el.grid.addEventListener('click', function (e) {
-      var b = e.target.closest('.pick');
-      if (!b) return;
-      wear(b.dataset.id);
-    });
-
-    el.takeOff.addEventListener('click', function () {
-      state.layers = state.layers.filter(function (l) { return l.cat !== state.cat; });
-      state.sel = null;
-      renderAll();
-    });
-
-    el.worn.addEventListener('click', function (e) {
-      var off = e.target.closest('[data-off]');
-      if (off) { removeLayer(off.dataset.off); renderAll(); return; }
-      var tag = e.target.closest('[data-ly]');
-      if (tag) { state.sel = tag.dataset.ly; renderStage(); }
-    });
+    el.pickerModal = $('studio-picker-modal');
+    el.pickerCats = $('studio-picker-cats');
+    el.pickerItems = $('studio-picker-items');
+    el.pickerItemsGrid = $('studio-picker-items-grid');
+    el.pickerBack = $('studio-picker-back');
+    el.pickerConfirm = $('studio-picker-confirm');
+    el.pickerHint = $('studio-picker-hint');
 
     el.stage.addEventListener('pointerdown', onPointerDown);
     el.stage.addEventListener('pointermove', onPointerMove);
@@ -386,15 +415,40 @@
       if (b) adjust(b.dataset.act);
     });
 
+    el.worn.addEventListener('click', function (e) {
+      var off = e.target.closest('[data-off]');
+      if (off) { removeLayer(off.dataset.off); renderAll(); return; }
+      var tag = e.target.closest('[data-ly]');
+      if (tag) { state.sel = tag.dataset.ly; renderStage(); }
+    });
+
     $('btn-shuffle').addEventListener('click', shuffle);
     $('btn-clear').addEventListener('click', function () {
       state.layers = []; state.sel = null; renderAll();
     });
     $('btn-save-look').addEventListener('click', saveLook);
 
+    el.pickerCats.addEventListener('click', onPickerCatClick);
+    el.pickerItemsGrid.addEventListener('click', onPickerItemClick);
+    el.pickerBack.addEventListener('click', function () {
+      picker.view = 'cats';
+      renderPicker();
+    });
+    el.pickerConfirm.addEventListener('click', onPickerConfirm);
+
+    // 弹窗关闭按钮 / mask
+    el.pickerModal.addEventListener('click', function (e) {
+      var close = e.target.closest('[data-close]');
+      if (close || e.target.classList.contains('modal-mask')) closePicker();
+      // 弹窗内「去添加」触发文件选择
+      var add = e.target.closest('[data-action="add"]');
+      if (add) { closePicker(); var fi = $('file-input'); if (fi) fi.click(); }
+    });
+
     CL.store.on('items', function () {
       state.layers = state.layers.filter(function (l) { return CL.store.getItem(l.itemId); });
       renderAll();
+      if (!el.pickerModal.hidden) renderPicker();
     });
 
     renderAll();
@@ -404,6 +458,6 @@
     init: init, wear: wear, takeOffItem: takeOffItem, loadLook: loadLook,
     exportPng: exportPng, render: renderAll,
     setMannequin: function (v) { state.showMannequin = v; renderStage(); },
-    setCat: function (c) { state.cat = c; renderCats(); renderPicker(); renderGhost(); }
+    setCat: function (c) { state.cat = c; }
   };
 })(window);
