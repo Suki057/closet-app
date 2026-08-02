@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>衣橱 · Closet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=17">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FF4FA3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="衣橱">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<!-- 未来如接入浏览器 AI 模型，可在此添加 import map -->
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <span class="brand-name">衣橱</span>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab is-active" data-view="home">首页</button>
+    <button class="tab" data-view="wardrobe">衣橱</button>
+    <button class="tab" data-view="studio">搭配间</button>
+    <button class="tab" data-view="looks">搭配集</button>
+  </nav>
+
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-icon" id="btn-settings" title="设置">
+      <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+    <button class="btn btn-primary" id="btn-add">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="btn-label">添加单品</span>
+    </button>
+  </div>
+</header>
+
+<main class="stage-root">
+
+  <!-- ============ 首页 ============ -->
+  <section class="view is-active" id="view-home">
+    <div class="home">
+
+      <!-- Hero -->
+      <div class="home-hero">
+        <div class="hero-deco" aria-hidden="true">
+          <span class="spark sp1"></span>
+          <span class="spark sp2"></span>
+          <span class="spark sp3"></span>
+          <span class="spark sp4"></span>
+          <svg class="deco deco-heel" viewBox="0 0 64 64">
+            <path d="M5 41 C16 32 27 32 35 39 L44 41 L44 47 L35 45 C27 41 19 43 11 49 L9 49 C7 46 5 44 5 41 Z" fill="#FF4FA3"/>
+            <path d="M44 41 L49 60 L54 60 L49 41 Z" fill="#FF86C6"/>
+          </svg>
+          <svg class="deco deco-bag" viewBox="0 0 64 64">
+            <path d="M16 27 H48 L45 55 H19 Z" fill="#FFC2E3" stroke="#FF4FA3" stroke-width="2.6" stroke-linejoin="round"/>
+            <path d="M24 27 V21 a8 8 0 0 1 16 0 V27" fill="none" stroke="#FF4FA3" stroke-width="3.2" stroke-linecap="round"/>
+          </svg>
+          <svg class="deco deco-bow" viewBox="0 0 64 64">
+            <path d="M32 32 L11 21 L11 43 Z" fill="#FF86C6"/>
+            <path d="M32 32 L53 21 L53 43 Z" fill="#FF86C6"/>
+            <circle cx="32" cy="32" r="6.5" fill="#FF4FA3"/>
+          </svg>
+          <svg class="deco deco-lip" viewBox="0 0 64 64">
+            <rect x="25" y="27" width="14" height="27" rx="2.5" fill="#FFC2E3"/>
+            <path d="M25 27 L39 27 L39 15 Q32 8 25 17 Z" fill="#FF4FA3"/>
+          </svg>
+        </div>
+        <div class="hero-text">
+          <p class="hero-eyebrow">Closet · 你的衣橱</p>
+          <h1 class="hero-title">好好穿衣，<br>先看见自己的衣橱</h1>
+          <p class="hero-sub">导入衣服照片，App 自动抠出主体、归好类目；再到搭配间自由叠穿，一眼看清这套好不好看。</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" data-action="add">
+              <svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg>
+              添加单品
+            </button>
+            <button class="btn btn-soft" data-goto="studio">去搭配间</button>
+            <button class="btn btn-ghost" data-goto="looks">我的搭配</button>
+          </div>
+        </div>
+        <div class="hero-art" id="hero-art" aria-hidden="true"></div>
+      </div>
+
+      <!-- 概览统计 -->
+      <div class="home-stats" id="home-stats">
+        <button class="stat-card" data-goto="wardrobe">
+          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>
+          <span class="stat-num" id="stat-items">0</span>
+          <span class="stat-label">件单品</span>
+        </button>
+        <button class="stat-card" data-goto="studio">
+          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M32 8 C34 26 38 30 56 32 C38 34 34 38 32 56 C30 38 26 34 8 32 C26 30 30 26 32 8 Z" fill="currentColor"/></svg></span>
+          <span class="stat-num" id="stat-looks">0</span>
+          <span class="stat-label">套搭配</span>
+        </button>
+        <button class="stat-card" data-goto="wardrobe">
+          <span class="stat-ico"><svg viewBox="0 0 64 64"><path d="M14 16 H44 L52 32 L44 48 H14 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="32" r="3.5" fill="currentColor" stroke="none"/></svg></span>
+          <span class="stat-num" id="stat-cats">0</span>
+          <span class="stat-label">个类目</span>
+        </button>
+      </div>
+
+      <!-- 衣橱构成 -->
+      <section class="home-section" id="home-cat-section">
+        <div class="home-section-head">
+          <h2><span class="sec-ico"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>衣橱构成</h2>
+          <button class="link-btn" data-goto="wardrobe">查看全部 →</button>
+        </div>
+        <div class="home-cats" id="home-cats"></div>
+      </section>
+
+      <!-- 最近导入 -->
+      <section class="home-section" id="home-recent-section">
+        <div class="home-section-head">
+          <h2><span class="sec-ico"><svg viewBox="0 0 64 64"><path d="M32 8 C34 26 38 30 56 32 C38 34 34 38 32 56 C30 38 26 34 8 32 C26 30 30 26 32 8 Z" fill="currentColor"/></svg></span>最近导入</h2>
+          <button class="link-btn" data-goto="wardrobe">查看衣橱 →</button>
+        </div>
+        <div class="grid" id="home-recent"></div>
+      </section>
+
+      <!-- 空状态 -->
+      <div class="empty home-empty" id="home-empty" hidden>
+        <div class="empty-art">
+          <svg class="art" viewBox="0 0 120 120">
+            <path d="M60 34a8 8 0 0 1 8 8c0 3-2 5-5 6l-30 16c-3 1-5 4-5 7 0 5 4 8 9 8h48c5 0 9-3 9-8 0-3-2-6-5-7L57 48" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="60" cy="34" r="3.5" style="fill:#FF4FA3;stroke:none"/>
+            <path d="M52 56 L48 66 L60 70 L72 66 L68 56 L65 50 L55 50 Z" style="fill:rgba(255,134,198,.22)"/>
+            <path d="M30 40 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z" style="fill:#FF86C6;stroke:none"/>
+            <path d="M88 58 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" style="fill:#FFB3D9;stroke:none"/>
+          </svg>
+        </div>
+        <h3>衣橱从这里开始</h3>
+        <p>把衣服平铺在浅色背景上拍一张，导入后会自动抠出主体、识别类目，并出现在你的衣橱里。</p>
+        <button class="btn btn-primary" data-action="add">导入第一件单品</button>
+        <p class="home-empty-tip">也支持把图片拖到任意位置，或粘贴截图</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 衣橱 ============ -->
+  <section class="view" id="view-wardrobe">
+    <div class="page-deco page-deco-wardrobe" aria-hidden="true">
+      <svg class="pdeco pd-heel" viewBox="0 0 64 64"><path d="M5 41 C16 32 27 32 35 39 L44 41 L44 47 L35 45 C27 41 19 43 11 49 L9 49 C7 46 5 44 5 41 Z" fill="#FFB3D9"/><path d="M44 41 L49 60 L54 60 L49 41 Z" fill="#FF86C6"/></svg>
+      <svg class="pdeco pd-bow" viewBox="0 0 64 64"><path d="M32 32 L11 21 L11 43 Z" fill="#FF86C6"/><path d="M32 32 L53 21 L53 43 Z" fill="#FF86C6"/><circle cx="32" cy="32" r="6.5" fill="#FF4FA3"/></svg>
+      <svg class="pdeco pd-bag" viewBox="0 0 64 64"><path d="M16 27 H48 L45 55 H19 Z" fill="#FFC2E3" stroke="#FF4FA3" stroke-width="2.6" stroke-linejoin="round"/><path d="M24 27 V21 a8 8 0 0 1 16 0 V27" fill="none" stroke="#FF4FA3" stroke-width="3.2" stroke-linecap="round"/></svg>
+      <span class="pdeco pd-star"></span>
+    </div>
+    <div class="wardrobe-head">
+      <div class="cat-rail" id="wardrobe-cats"></div>
+      <div class="sub-rail" id="wardrobe-subs" hidden></div>
+      <div class="ward-tools">
+        <label class="search">
+          <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input type="text" id="search-input" placeholder="搜索名称、颜色、标签">
+        </label>
+        <button class="chip chip-toggle" id="fav-filter" title="只看收藏">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
+          收藏
+        </button>
+      </div>
+    </div>
+
+    <div class="wardrobe-body">
+      <div class="grid" id="wardrobe-grid"></div>
+      <div class="empty" id="wardrobe-empty" hidden>
+        <div class="empty-art">
+          <svg class="art" viewBox="0 0 120 120">
+            <path d="M60 30a8 8 0 0 1 8 8c0 3-2 5-5 6l-30 16c-3 1-5 4-5 7 0 5 4 8 9 8h48c5 0 9-3 9-8 0-3-2-6-5-7L57 44" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="60" cy="30" r="3.5" style="fill:#FF4FA3;stroke:none"/>
+            <path d="M60 70 L48 62 L48 78 Z" style="fill:#FF86C6;stroke:none"/>
+            <path d="M60 70 L72 62 L72 78 Z" style="fill:#FF86C6;stroke:none"/>
+            <circle cx="60" cy="70" r="4" style="fill:#FF4FA3;stroke:none"/>
+            <path d="M88 40 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" style="fill:#FFB3D9;stroke:none"/>
+          </svg>
+        </div>
+        <h3>衣橱还是空的</h3>
+        <p>把衣服平铺在浅色背景上拍一张，导入后会自动抠出主体并归类。</p>
+        <button class="btn btn-primary" data-action="add">导入第一件单品</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 搭配间 ============ -->
+  <section class="view" id="view-studio">
+    <div class="studio">
+
+      <!-- 左：选品 -->
+      <div class="picker">
+        <div class="picker-head">
+          <h2>选择单品</h2>
+          <p class="hint">点类目查看，点单品即刻上身 →</p>
+        </div>
+        <div class="cat-rail cat-rail-studio" id="studio-cats"></div>
+        <div class="picker-bar">
+          <span class="picker-count" id="picker-count"></span>
+          <button class="link-btn" id="btn-take-off" hidden>脱下该类目</button>
+        </div>
+        <div class="picker-grid" id="picker-grid"></div>
+        <div class="picker-empty" id="picker-empty" hidden>
+          <span class="pdeco pd-pick"><svg viewBox="0 0 64 64"><path d="M32 14a6 6 0 0 1 6 6c0 2-1 3-3 4l-22 14c-2 1-3 3-3 5 0 4 3 6 7 6h28c4 0 7-2 7-6 0-2-1-4-3-5L36 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="3" fill="currentColor" stroke="none"/></svg></span>
+          <p>这个类目还没有单品</p>
+          <button class="btn btn-soft btn-sm" data-action="add">去添加</button>
+        </div>
+      </div>
+
+      <!-- 右：预览 -->
+      <div class="preview">
+        <div class="preview-head">
+          <h2>搭配预览</h2>
+          <div class="preview-actions">
+            <button class="btn btn-soft btn-sm" id="btn-shuffle">随机一套</button>
+            <button class="btn btn-soft btn-sm" id="btn-clear">清空</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-look">保存搭配</button>
+          </div>
+        </div>
+
+        <div class="stage-wrap">
+          <div class="stage" id="stage">
+            <svg class="mannequin" id="mannequin" viewBox="0 0 380 620" aria-hidden="true">
+              <g fill="#F7DCEC">
+                <ellipse cx="190" cy="52" rx="28" ry="34"/>
+                <rect x="177" y="80" width="26" height="22" rx="8"/>
+                <path d="M130 100 Q190 88 250 100 L240 246 Q190 258 140 246 Z"/>
+                <path d="M140 244 Q190 256 240 244 L248 336 Q190 352 132 336 Z"/>
+                <path d="M133 104 L114 111 L98 300 Q97 310 106 312 Q115 314 117 304 Z"/>
+                <path d="M247 104 L266 111 L282 300 Q283 310 274 312 Q265 314 263 304 Z"/>
+                <path d="M148 332 L180 332 L177 566 Q177 576 167 576 Q157 576 156 566 Z"/>
+                <path d="M232 332 L200 332 L203 566 Q203 576 213 576 Q223 576 224 566 Z"/>
+              </g>
+            </svg>
+            <div class="layers" id="layers"></div>
+            <div class="ghost-slot" id="ghost-slot" hidden><span></span></div>
+          </div>
+
+          <div class="item-toolbar" id="item-toolbar" hidden>
+            <button data-act="smaller" title="缩小"><svg viewBox="0 0 24 24" class="ico"><path d="M5 12h14"/></svg></button>
+            <button data-act="bigger" title="放大"><svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg></button>
+            <span class="sep"></span>
+            <button data-act="up" title="上移一层"><svg viewBox="0 0 24 24" class="ico"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+            <button data-act="down" title="下移一层"><svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+            <span class="sep"></span>
+            <button data-act="reset" title="复位">复位</button>
+            <button data-act="remove" class="danger" title="脱下"><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+
+        <div class="worn-strip" id="worn-strip"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 搭配集 ============ -->
+  <section class="view" id="view-looks">
+    <div class="page-deco page-deco-looks" aria-hidden="true">
+      <svg class="pdeco pd-dress" viewBox="0 0 64 64"><path d="M26 12 L24 22 L14 30 L18 58 H46 L50 30 L40 22 L38 12 Z" fill="#FFC2E3" stroke="#FF4FA3" stroke-width="2.4" stroke-linejoin="round"/></svg>
+      <svg class="pdeco pd-bag" viewBox="0 0 64 64"><path d="M16 27 H48 L45 55 H19 Z" fill="#FFC2E3" stroke="#FF4FA3" stroke-width="2.6" stroke-linejoin="round"/><path d="M24 27 V21 a8 8 0 0 1 16 0 V27" fill="none" stroke="#FF4FA3" stroke-width="3.2" stroke-linecap="round"/></svg>
+      <svg class="pdeco pd-bow" viewBox="0 0 64 64"><path d="M32 32 L11 21 L11 43 Z" fill="#FF86C6"/><path d="M32 32 L53 21 L53 43 Z" fill="#FF86C6"/><circle cx="32" cy="32" r="6.5" fill="#FF4FA3"/></svg>
+      <span class="pdeco pd-star"></span>
+    </div>
+      <h2>我的搭配</h2>
+      <p class="hint">点击可载入搭配间继续调整</p>
+    </div>
+    <div class="looks-grid" id="looks-grid"></div>
+    <div class="empty" id="looks-empty" hidden>
+        <div class="empty-art">
+          <svg class="art" viewBox="0 0 120 120">
+            <path d="M34 48 L44 40 M86 48 L76 40" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M44 40 Q60 34 76 40 L70 56 L78 104 H42 L50 56 Z" style="fill:rgba(255,134,198,.20)" stroke-width="2.6" stroke-linejoin="round"/>
+            <circle cx="60" cy="40" r="3" style="fill:#FF4FA3;stroke:none"/>
+            <path d="M26 64 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" style="fill:#FFB3D9;stroke:none"/>
+            <path d="M92 80 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" style="fill:#FF86C6;stroke:none"/>
+          </svg>
+        </div>
+        <h3>还没有保存的搭配</h3>
+      <p>去搭配间挑一套，点「保存搭配」就会出现在这里。</p>
+      <button class="btn btn-primary" data-goto="studio">去搭配</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ 导入面板 ============ -->
+<div class="modal" id="import-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-import">
+    <header class="modal-head">
+      <h3>处理单品 <span class="counter" id="import-counter"></span></h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+
+    <div class="import-steps" id="import-steps">
+      <span class="step is-active" data-step="select">① 涂抹主体</span>
+      <span class="step" data-step="cut">② 抠图预览</span>
+    </div>
+
+    <!-- 步骤一：涂抹选择 -->
+    <div class="select-stage" id="select-stage">
+      <div class="select-wrap" id="select-wrap">
+        <img id="select-img" alt="原图">
+        <canvas id="sel-canvas"></canvas>
+      </div>
+      <div class="select-tools">
+        <p class="sel-hint" id="sel-hint">用<b class="dot fg"></b><b>主体笔刷</b>在衣服上涂抹大概位置（一两笔即可），软件会自动锁定主体并去掉背景，<b>不需要涂抹背景</b>。不满意可撤销 / 清除后重涂。</p>
+        <div class="brush-bar">
+          <div class="brush-tools">
+            <button class="brush-btn is-active" id="brush-fg" type="button">主体笔刷（保留）</button>
+            <button class="brush-btn" id="brush-bg" type="button" hidden>背景（去除）</button>
+          </div>
+          <label class="brush-size">
+            <span>笔刷大小</span>
+            <input type="range" id="brush-size" min="2" max="20" value="6">
+          </label>
+        </div>
+        <label class="switch-row small adv-toggle">
+          <input type="checkbox" id="sel-adv">
+          <span>高级：手动标记背景（仅当衣服贴到图片边缘时）</span>
+        </label>
+        <div class="sel-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-undo-sel" type="button">撤销</button>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-sel" type="button">清除</button>
+          <button class="btn btn-soft btn-sm" id="btn-use-all" type="button">整图自动抠图</button>
+          <button class="btn btn-primary btn-sm" id="btn-do-cut" type="button">开始抠图</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤二：抠图结果 -->
+    <div class="import-body" id="import-body" hidden>
+      <div class="import-preview">
+        <div class="cutout-box">
+          <img id="cutout-img" alt="抠图结果">
+          <div class="cutout-loading" id="cutout-loading"><span class="spinner"></span>正在抠图…</div>
+        </div>
+        <div class="cutout-meta">
+          <label class="slider-row">
+            <span>抠图强度</span>
+            <input type="range" id="tol-range" min="0" max="100" value="50">
+            <em id="tol-val">中</em>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="keep-original">
+            <span>保留原图（不抠背景）</span>
+          </label>
+          <button class="btn btn-soft btn-block" id="btn-reselect">重新选择范围</button>
+        </div>
+      </div>
+
+      <div class="import-form">
+        <label class="field">
+          <span class="field-label">名称</span>
+          <input type="text" id="item-name" placeholder="例如：米白宽松衬衫">
+        </label>
+
+        <div class="field">
+          <span class="field-label">类目 <em class="auto-tag" id="auto-tag"></em></span>
+          <div class="cat-picker" id="cat-picker"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">主色</span>
+          <div class="swatches" id="swatches"></div>
+        </div>
+
+        <label class="field">
+          <span class="field-label">标签（逗号分隔，可留空）</span>
+          <input type="text" id="item-tags" placeholder="通勤, 春秋, 棉">
+        </label>
+      </div>
+    </div>
+
+    <footer class="modal-foot" id="import-foot" hidden>
+      <button class="btn btn-ghost" id="btn-skip">跳过这张</button>
+      <button class="btn btn-primary" id="btn-save-item">存入衣橱</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ============ 单品详情 ============ -->
+<div class="modal" id="item-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-item">
+    <header class="modal-head">
+      <h3>单品</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="item-body">
+      <div class="item-shot"><img id="detail-img" alt=""></div>
+      <div class="item-form">
+        <label class="field">
+          <span class="field-label">名称</span>
+          <input type="text" id="detail-name">
+        </label>
+        <div class="field">
+          <span class="field-label">类目</span>
+          <div class="cat-picker" id="detail-cat"></div>
+        </div>
+        <div class="field">
+          <span class="field-label">子类目</span>
+          <div class="cat-picker sub-picker" id="detail-sub"></div>
+        </div>
+        <label class="field">
+          <span class="field-label">标签</span>
+          <input type="text" id="detail-tags">
+        </label>
+      </div>
+    </div>
+    <footer class="modal-foot spread">
+      <button class="btn btn-ghost danger" id="btn-delete-item">删除</button>
+      <div class="foot-right">
+        <button class="btn btn-soft" id="btn-wear-item">加入搭配</button>
+        <button class="btn btn-primary" id="btn-update-item">保存修改</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ============ 设置 ============ -->
+<div class="modal" id="settings-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-settings">
+    <header class="modal-head">
+      <h3>设置</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="settings-body">
+      <label class="switch-row big">
+        <input type="checkbox" id="opt-ai-cutout">
+        <span>
+          <strong>云端 AI 一键抠图</strong>
+          <em>调用 remove.bg 接口，自动识别并完美抠出主体。需填写下方 API key，按张计费。</em>
+        </span>
+      </label>
+      <label class="field api-key-field">
+        <span class="field-label">remove.bg API key</span>
+        <input type="text" id="opt-api-key" placeholder="在 remove.bg/dashboard#api-key 获取">
+        <em class="field-hint">留空则使用本地抠图（复杂图建议涂主体笔刷辅助）。</em>
+      </label>
+      <label class="switch-row big">
+        <input type="checkbox" id="opt-mannequin" checked>
+        <span>
+          <strong>显示人台剪影</strong>
+          <em>关闭后搭配预览为纯净背景，更适合导出。</em>
+        </span>
+      </label>
+      <div class="settings-stat" id="settings-stat"></div>
+      <div class="settings-danger">
+        <button class="btn btn-ghost danger btn-sm" id="btn-wipe">清空全部数据</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*" multiple hidden>
+<div class="toast" id="toast" hidden></div>
+<div class="drop-hint" id="drop-hint" hidden><div>松手即可导入</div></div>
+
+<script src="js/db.js?v=5"></script>
+<script src="js/color.js"></script>
+<script src="js/catalog.js?v=1"></script>
+<script src="js/segment.js?v=6"></script>
+<script src="js/store.js?v=6"></script>
+<script src="js/wardrobe.js?v=3"></script>
+<script src="js/studio.js"></script>
+<script src="js/looks.js"></script>
+<script src="js/home.js?v=1"></script>
+<script src="js/app.js?v=9"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* 非安全上下文（如 HTTP 局域网）下静默忽略 */ });
+    });
+  }
+</script>
+</body>
+</html>

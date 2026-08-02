@@ -1,0 +1,20 @@
+{
+  "name": "衣橱 · Closet",
+  "short_name": "衣橱",
+  "description": "好好穿衣，先看见自己的衣橱。导入衣服照片，自动抠图归类，再到搭配间自由叠穿。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#FFE8F4",
+  "theme_color": "#FF4FA3",
+  "categories": ["lifestyle", "shopping", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
