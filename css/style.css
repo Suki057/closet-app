@@ -238,8 +238,8 @@ button{cursor:pointer;border:none;background:none}
   color:#fff;box-shadow:0 4px 14px rgba(244,194,78,.28);
 }
 .cat-bottom-bar .sub-rail{
-  display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-  padding:6px 24px 0;margin-top:2px;
+  display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:12px 24px 0;margin-top:8px;
   max-width:1340px;margin:0 auto;
 }
 .cat-bottom-bar .sub-rail[hidden]{display:none}
@@ -257,6 +257,12 @@ button{cursor:pointer;border:none;background:none}
 .cat-bottom-bar .cat-rail{touch-action:pan-y}
 .cat-bottom-bar .chip{touch-action:pan-y;user-select:none;-webkit-user-select:none;position:relative}
 .cat-bottom-bar .chip.is-managing{padding-left:28px}
+.cat-bottom-bar .sub-rail .sub-chip{position:relative}
+.cat-bottom-bar .sub-rail .sub-chip.is-managing{padding-left:24px}
+.cat-bottom-bar .sub-rail .cat-del{
+  left:-5px;top:-5px;width:16px;height:16px;
+  font-size:11px;line-height:16px;
+}
 .cat-del{
   position:absolute;left:-6px;top:-6px;z-index:20;
   width:18px;height:18px;border-radius:50%;
@@ -287,9 +293,14 @@ button{cursor:pointer;border:none;background:none}
   background:linear-gradient(180deg,var(--accent),var(--accent-2));
 }
 .grid{
-  display:grid;gap:16px;
-  grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
+  display:grid;gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(124px,1fr));
 }
+#wardrobe-grid .card-pure .card-info,
+#wardrobe-grid .card-pure .card-actions{display:none}
+#wardrobe-grid .card-pure .card-shot{border-radius:var(--radius)}
+#wardrobe-grid .card-pure{box-shadow:inset 0 0 0 1px var(--line),0 6px 18px rgba(0,0,0,.30)}
+#wardrobe-grid .card-pure:hover{transform:translateY(-2px)}
 .card{
   position:relative;background:var(--surface);border-radius:var(--radius);
   box-shadow:var(--shadow-1);overflow:hidden;transition:.2s;cursor:pointer;
@@ -668,7 +679,7 @@ button{cursor:pointer;border:none;background:none}
   .tab{padding:8px 12px;font-size:13px}
   .wardrobe-head{padding:18px 14px 10px}
   .wardrobe-body{padding:4px 14px 120px}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:11px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
   .studio,.looks-grid,.looks-head{padding-left:14px;padding-right:14px}
   .search input{width:110px}
   .item-body{grid-template-columns:1fr}
@@ -755,7 +766,7 @@ button{cursor:pointer;border:none;background:none}
   .wardrobe-body{padding:4px 14px 120px}
   .cat-bottom-bar{padding:6px 0 14px}
   .cat-bottom-bar .cat-rail{padding:6px 14px 0}
-  .cat-bottom-bar .sub-rail{padding:6px 14px 0}
+  .cat-bottom-bar .sub-rail{padding:10px 14px 0;margin-top:8px}
   .cat-bottom-bar .chip{height:44px;padding:0 14px;font-size:12.5px}
   .page-deco{display:none}
 }
@@ -1018,7 +1029,7 @@ button{cursor:pointer;border:none;background:none}
   .home-hero{padding:40px 20px}
   .hero-title{font-size:26px}
   .hero-title.affirm{font-size:14px;line-height:1.7}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px}
   /* 弹窗贴近屏幕，更像原生 App */
   .modal{padding:0}
   .modal-card{border-radius:18px 18px 0 0;max-height:100vh;align-self:flex-end}

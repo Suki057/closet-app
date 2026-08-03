@@ -39,18 +39,21 @@
     var subs = CL.catalog.subsOf(state.cat);
     if (state.cat === 'all' || !subs.length) { el.subs.hidden = true; el.subs.innerHTML = ''; return; }
     var counts = CL.store.countBySub(state.cat);
-    var html = '<button class="sub-chip ' + (!state.sub ? 'is-active' : '') + '" data-sub="">全部' + (c ? esc(c.name) : '') + '</button>';
+    var html = '<button class="sub-chip ' + (!state.sub ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-sub="">' +
+      '全部' + (c ? esc(c.name) : '') + '</button>';
     subs.forEach(function (s) {
-      html += '<button class="sub-chip ' + (state.sub === s.id ? 'is-active' : '') + '" data-sub="' + s.id + '">' +
-        esc(s.name) + '<span class="n">' + (counts[s.id] || 0) + '</span></button>';
+      var delBadge = state.manageMode ? '<span class="cat-del" data-act="del-sub" title="删除子分类">×</span>' : '';
+      html += '<button class="sub-chip ' + (state.sub === s.id ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-sub="' + s.id + '" title="' + (state.manageMode ? '点击 × 删除子分类' : '') + '">' +
+        delBadge + '<span class="chip-name">' + esc(s.name) + '</span><span class="n">' + (counts[s.id] || 0) + '</span></button>';
     });
     el.subs.innerHTML = html;
     el.subs.hidden = false;
   }
 
   function filtered() {
+    if (!state.loc) return []; // 未选择地点时衣橱网格为空
     var list = CL.store.itemsOf(state.cat, state.sub);
-    if (state.loc) list = list.filter(function (i) { return i.location === state.loc; });
+    list = list.filter(function (i) { return i.location === state.loc; });
     if (state.favOnly) list = list.filter(function (i) { return i.favorite; });
     var q = state.q.trim().toLowerCase();
     if (q) {
@@ -64,31 +67,21 @@
 
   function render() {
     renderCats();
+    renderSubs();
     renderPlaces();
     var list = filtered();
-    if (el.empty) el.empty.hidden = list.length > 0 || CL.store.items().length > 0;
+    if (!state.loc) {
+      el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>请选择地点</h3><p>点击「家里」或「现居地」查看对应库存。</p></div>';
+      return;
+    }
     if (!list.length && CL.store.items().length > 0) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>没有匹配的单品</h3><p>换个类目或关键词试试。</p></div>';
       return;
     }
     el.grid.innerHTML = list.map(function (i) {
-      return '<article class="card' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
+      return '<article class="card card-pure' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
         '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy">' +
           (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
-        '</div>' +
-        '<div class="card-info">' +
-          '<span class="card-dot" style="background:' + esc(i.color) + '"></span>' +
-          '<span class="card-name">' + esc(i.name) + '</span>' +
-          '<span class="card-cat">' + esc(CL.catalog.name(i.category)) +
-            (i.sub ? ' · ' + esc(CL.catalog.subName(i.category, i.sub)) : '') + '</span>' +
-        '</div>' +
-        '<div class="card-actions">' +
-          '<button class="mini-btn' + (i.favorite ? ' on' : '') + '" data-act="fav" title="收藏">' +
-            '<svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg></button>' +
-          '<button class="mini-btn" data-act="wear" title="加入搭配">' +
-            '<svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg></button>' +
-          '<button class="mini-btn" data-act="trash" title="移入回收站">' +
-            '<svg viewBox="0 0 24 24" class="ico"><path d="M6 7h12M9 7V5h6v2M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button>' +
         '</div>' +
       '</article>';
     }).join('');
@@ -245,6 +238,23 @@
     });
 
     if (el.subs) el.subs.addEventListener('click', function (e) {
+      var del = e.target.closest('.cat-del');
+      if (del) {
+        e.stopPropagation();
+        var b = e.target.closest('.sub-chip');
+        var subId = b && b.dataset.sub;
+        if (!subId || !state.cat || state.cat === 'all') return;
+        if (state.sub === subId) state.sub = null;
+        var moved = 0;
+        CL.store.items().forEach(function (it) {
+          if (it.category === state.cat && it.sub === subId) { CL.store.updateItem(it.id, { sub: null }); moved++; }
+        });
+        CL.catalog.deleteSubCategory(state.cat, subId);
+        CL.ui.toast('已删除子分类' + (moved ? '，' + moved + ' 件单品已归入「全部' + CL.catalog.name(state.cat) + '」' : ''));
+        render();
+        return;
+      }
+      if (state.manageMode) return;
       var b = e.target.closest('.sub-chip');
       if (!b) return;
       state.sub = b.dataset.sub || null;

@@ -93,7 +93,7 @@
   CATEGORIES.forEach(function (c) { MAP[c.id] = c; });
 
 /* 用户自定义类目与重命名持久化 */
-var CUSTOM = { renames: {}, custom: [], order: [] };
+var CUSTOM = { renames: {}, custom: [], order: [], deletedSubs: [] };
 function loadCustom() {
   try {
     var raw = localStorage.getItem('CL.catalog.custom');
@@ -122,7 +122,13 @@ if (CUSTOM.order && CUSTOM.order.length) {
 
   function get(id) { return MAP[id] || MAP.top; }
   function name(id) { return (MAP[id] || {}).name || '其它'; }
-  function subsOf(id) { var c = MAP[id]; return (c && c.subs) ? c.subs : []; }
+  function subsOf(id) {
+    var c = MAP[id];
+    var arr = (c && c.subs) ? c.subs : [];
+    return arr.filter(function (s) {
+      return CUSTOM.deletedSubs.indexOf(id + ':' + s.id) < 0;
+    });
+  }
   function subName(catId, subId) {
     if (!subId) return '';
     var subs = subsOf(catId);
@@ -168,8 +174,22 @@ if (CUSTOM.order && CUSTOM.order.length) {
     var oi = CUSTOM.order.indexOf(id);
     if (oi >= 0) CUSTOM.order.splice(oi, 1);
     delete CUSTOM.renames[id];
+    // 清理该分类下的子分类删除记录
+    CUSTOM.deletedSubs = CUSTOM.deletedSubs.filter(function (key) { return key.indexOf(id + ':') !== 0; });
     saveCustom();
     return c;
+  }
+
+  function deleteSubCategory(catId, subId) {
+    var c = MAP[catId];
+    if (!c || !c.subs) return false;
+    var idx = c.subs.findIndex(function (s) { return s.id === subId; });
+    if (idx < 0) return false;
+    c.subs.splice(idx, 1);
+    var key = catId + ':' + subId;
+    if (CUSTOM.deletedSubs.indexOf(key) < 0) CUSTOM.deletedSubs.push(key);
+    saveCustom();
+    return true;
   }
 
   function setCategoryOrder(ids) {
@@ -254,6 +274,7 @@ if (CUSTOM.order && CUSTOM.order.length) {
     subsOf: subsOf, subName: subName,
     addCategory: addCategory, renameCategory: renameCategory,
     deleteCategory: deleteCategory,
+    deleteSubCategory: deleteSubCategory,
     setCategoryOrder: setCategoryOrder,
     ids: function () { return CATEGORIES.map(function (c) { return c.id; }); },
     ALL_ICON: P.all
