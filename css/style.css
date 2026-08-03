@@ -445,7 +445,7 @@ button{cursor:pointer;border:none;background:none}
 .modal-foot.spread{justify-content:space-between}
 .foot-right{display:flex;gap:8px}
 
-.import-body{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:20px;overflow:auto}
+.import-body{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:20px;overflow:auto;flex:1 1 auto;min-height:0}
 .cutout-box{
   position:relative;aspect-ratio:1/1;border-radius:14px;overflow:hidden;
   display:grid;place-items:center;padding:16px;
@@ -510,9 +510,9 @@ button{cursor:pointer;border:none;background:none}
 .import-steps{display:flex;gap:8px;padding:14px 20px 0}
 .step{font-size:12.5px;color:var(--ink-3);padding:5px 13px;border-radius:999px;background:var(--surface-2);font-weight:500;transition:.15s;letter-spacing:.03em}
 .step.is-active{background:var(--active-bg);color:var(--active-ink)}
-.select-stage{padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.select-stage{padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .select-wrap{position:relative;display:inline-block;line-height:0;max-width:100%;margin:0 auto;align-self:center;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);background:#fff;cursor:crosshair;touch-action:none;user-select:none}
-.select-wrap img{display:block;max-width:100%;max-height:54vh;width:auto}
+.select-wrap img{display:block;max-width:100%;max-height:48vh;width:auto}
 .sel-overlay{position:absolute;inset:0;pointer-events:none}
 .sel-box{position:absolute;border:2px solid var(--accent);border-radius:6px;box-shadow:0 0 0 9999px rgba(10,8,16,.45);background:rgba(176,141,87,.10)}
 .sel-box::after{content:"";position:absolute;inset:-2px;border:2px dashed rgba(255,255,255,.7);border-radius:6px;pointer-events:none}
@@ -931,6 +931,9 @@ button{cursor:pointer;border:none;background:none}
   .modal-head{padding:16px}
   .modal-foot{padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
   .import-body{grid-template-columns:1fr;padding:16px}
+  .select-stage{padding:16px;gap:12px}
+  .select-wrap img{max-height:36vh}
+  .select-tools{gap:8px}
   .item-body{grid-template-columns:1fr}
   .import-steps{font-size:12px}
   .hero-actions .btn,.hero-actions .btn-soft{flex:1 1 auto}
