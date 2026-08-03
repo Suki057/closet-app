@@ -636,12 +636,12 @@ button{cursor:pointer;border:none;background:none}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
   .wardrobe-places{padding:12px 14px 2px;gap:8px}
   .wardrobe-layout{flex-direction:column;padding:4px 14px 50px;gap:0}
-  .wardrobe-main{order:1}
-  .cat-sidebar{order:2;width:100%;position:static;flex-direction:row;max-height:none;overflow-x:auto;padding:10px 0 6px;margin-top:4px}
-  .cat-sidebar .cat-rail{flex-direction:row;flex-wrap:nowrap}
-  .cat-sidebar .chip{width:auto;flex:none;height:36px}
-  .wardrobe-head{padding:16px 0 8px}
-  .wardrobe-body{padding:8px 0 50px}
+  .wardrobe-main{display:contents}
+  .wardrobe-head{order:1;padding:14px 0 10px}
+  .cat-sidebar{order:2;width:100%;position:static;flex-direction:column;max-height:none;overflow:visible;padding:6px 0;margin-top:2px}
+  .cat-sidebar .cat-rail{flex-direction:column;flex-wrap:nowrap;align-items:stretch;overflow:visible;gap:7px}
+  .cat-sidebar .chip{width:100%;flex:none;height:40px;justify-content:flex-start;border-radius:12px}
+  .wardrobe-body{order:3;padding:10px 0 50px}
   .page-deco{display:none}
 }
 
@@ -896,9 +896,10 @@ button{cursor:pointer;border:none;background:none}
   .cat-rail::-webkit-scrollbar,.sub-rail::-webkit-scrollbar{display:none}
   .cat-rail .chip,.sub-rail .sub-chip{flex:none}
   .wardrobe-head{gap:10px}
-  .ward-tools{flex-wrap:wrap}
-  .ward-tools .search{flex:1}
-  .ward-tools .search input{width:100%;min-width:90px}
+  .ward-tools{flex-wrap:nowrap;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .ward-tools .chip{flex:none;padding:0 10px;font-size:12px}
+  .ward-tools .search{flex:none;padding:0 10px}
+  .ward-tools .search input{width:72px}
   .home-hero{padding:40px 20px}
   .hero-title{font-size:26px}
   .hero-title.affirm{font-size:13px;line-height:1.6}
