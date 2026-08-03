@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false };
 
   var el = {};
 
@@ -25,8 +25,9 @@
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
     CL.catalog.CATEGORIES.forEach(function (c, idx) {
-      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '" title="双击修改名称，长按拖拽排序">' +
-        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
+      var delBadge = state.manageMode ? '<span class="cat-del" data-act="del-cat" title="删除分类">×</span>' : '';
+      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '点击 × 删除分类' : '双击修改名称，长按拖拽排序') + '">' +
+        delBadge + icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
     });
     el.cats.innerHTML = html;
     renderSubs();
@@ -184,6 +185,24 @@
     el.placeResNote = $('place-residence-note');
 
     el.cats.addEventListener('click', function (e) {
+      var del = e.target.closest('.cat-del');
+      if (del) {
+        e.stopPropagation();
+        var b = e.target.closest('.chip');
+        var id = b && b.dataset.cat;
+        if (!id || id === 'all') return;
+        if (state.cat === id) state.cat = 'all';
+        // 将该分类下的单品移到默认分类 top
+        var moved = 0;
+        CL.store.items().forEach(function (it) {
+          if (it.category === id) { CL.store.updateItem(it.id, { category: 'top', sub: null }); moved++; }
+        });
+        CL.catalog.deleteCategory(id);
+        CL.ui.toast('已删除分类' + (moved ? '，' + moved + ' 件单品已归入上衣' : ''));
+        render();
+        return;
+      }
+      if (state.manageMode) return;
       var b = e.target.closest('.chip');
       if (!b || b.id === 'btn-add-cat') return;
       state.cat = b.dataset.cat;
@@ -198,7 +217,7 @@
     }
 
     el.cats.addEventListener('dblclick', function (e) {
-      if (e.target.closest('[data-move]')) return;
+      if (state.manageMode) return;
       var b = e.target.closest('.chip');
       if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
       var c = CL.catalog.get(b.dataset.cat);
@@ -207,6 +226,12 @@
         CL.catalog.renameCategory(c.id, name.trim());
         render();
       }
+    });
+
+    $('btn-manage-cat').addEventListener('click', function (e) {
+      state.manageMode = !state.manageMode;
+      e.currentTarget.classList.toggle('is-on', state.manageMode);
+      render();
     });
 
     $('btn-add-cat').addEventListener('click', function () {
@@ -286,6 +311,7 @@
       }
 
       rail.addEventListener('pointerdown', function (e) {
+        if (state.manageMode) return;
         var chip = e.target.closest('.chip[data-cat]');
         if (chip && chip.dataset.cat !== 'all') {
           sort.startX = e.clientX; sort.startY = e.clientY;

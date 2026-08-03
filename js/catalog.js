@@ -155,6 +155,23 @@ if (CUSTOM.order && CUSTOM.order.length) {
     return c;
   }
 
+  function deleteCategory(id) {
+    var idx = CATEGORIES.findIndex(function (c) { return c.id === id; });
+    if (idx < 0) return false;
+    var c = CATEGORIES[idx];
+    // 移除
+    CATEGORIES.splice(idx, 1);
+    delete MAP[id];
+    // 清理 CUSTOM
+    var ci = CUSTOM.custom.findIndex(function (x) { return x.id === id; });
+    if (ci >= 0) CUSTOM.custom.splice(ci, 1);
+    var oi = CUSTOM.order.indexOf(id);
+    if (oi >= 0) CUSTOM.order.splice(oi, 1);
+    delete CUSTOM.renames[id];
+    saveCustom();
+    return c;
+  }
+
   function setCategoryOrder(ids) {
     if (!Array.isArray(ids) || !ids.length) return false;
     var orderMap = {};
@@ -236,6 +253,7 @@ if (CUSTOM.order && CUSTOM.order.length) {
     CATEGORIES: CATEGORIES, get: get, name: name, guess: guess,
     subsOf: subsOf, subName: subName,
     addCategory: addCategory, renameCategory: renameCategory,
+    deleteCategory: deleteCategory,
     setCategoryOrder: setCategoryOrder,
     ids: function () { return CATEGORIES.map(function (c) { return c.id; }); },
     ALL_ICON: P.all
