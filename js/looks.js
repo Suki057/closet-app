@@ -35,6 +35,35 @@
     el.grid = $('looks-grid');
     el.empty = $('looks-empty');
 
+    // 双击「我的搭配」标题即可修改，修改后持久化
+    var titleBox = document.querySelector('.looks-head-box');
+    if (titleBox) {
+      var KEY = 'closet.looksTitle';
+      var saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (e) {}
+      if (saved) titleBox.textContent = saved;
+      titleBox.setAttribute('title', '双击修改标题');
+
+      titleBox.addEventListener('dblclick', function () {
+        titleBox.setAttribute('contenteditable', 'true');
+        titleBox.focus();
+        var range = document.createRange();
+        range.selectNodeContents(titleBox);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+      titleBox.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); titleBox.blur(); }
+      });
+      titleBox.addEventListener('blur', function () {
+        titleBox.removeAttribute('contenteditable');
+        var txt = titleBox.textContent.trim();
+        if (!txt) { txt = '我的搭配'; titleBox.textContent = txt; }
+        try { localStorage.setItem(KEY, txt); } catch (e) {}
+      });
+    }
+
     el.grid.addEventListener('click', function (e) {
       var card = e.target.closest('.look');
       if (!card) return;
