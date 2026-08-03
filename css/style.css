@@ -635,12 +635,13 @@ button{cursor:pointer;border:none;background:none}
   .hero-title.affirm{font-size:16px;line-height:1.55}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
   .wardrobe-places{padding:12px 14px 2px;gap:8px}
-  .wardrobe-layout{flex-direction:column;padding:4px 14px 50px;gap:14px}
-  .cat-sidebar{width:100%;position:static;flex-direction:row;max-height:none;overflow-x:auto;padding:0}
+  .wardrobe-layout{flex-direction:column;padding:4px 14px 50px;gap:0}
+  .wardrobe-main{order:1}
+  .cat-sidebar{order:2;width:100%;position:static;flex-direction:row;max-height:none;overflow-x:auto;padding:10px 0 6px;margin-top:4px}
   .cat-sidebar .cat-rail{flex-direction:row;flex-wrap:nowrap}
   .cat-sidebar .chip{width:auto;flex:none;height:36px}
-  .wardrobe-head{padding:16px 0 12px}
-  .wardrobe-body{padding:4px 0 50px}
+  .wardrobe-head{padding:16px 0 8px}
+  .wardrobe-body{padding:8px 0 50px}
   .page-deco{display:none}
 }
 
