@@ -304,12 +304,19 @@
       });
   }
 
-  function saveCurrent() {
+  function askLocation() {
     if (!imp.result) return;
+    ui.openModal('loc-modal');
+  }
+
+  function doSave(loc) {
+    if (!imp.result) return;
+    ui.closeModal('loc-modal');
     var tags = $('item-tags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
     CL.store.addItem({
       name: $('item-name').value.trim() || autoName(),
       category: imp.cat,
+      location: loc,
       blob: imp.result.blob,
       thumbBlob: imp.result.thumbBlob,
       width: imp.result.width,
@@ -366,7 +373,9 @@
       process();
     });
     $('item-name').addEventListener('input', function () { imp.nameEdited = true; });
-    $('btn-save-item').addEventListener('click', saveCurrent);
+    $('btn-save-item').addEventListener('click', askLocation);
+    $('loc-home').addEventListener('click', function () { doSave('home'); });
+    $('loc-residence').addEventListener('click', function () { doSave('residence'); });
     $('btn-skip').addEventListener('click', function () { imp.idx++; loadCurrent(); });
 
     /* 涂抹式选择交互 */

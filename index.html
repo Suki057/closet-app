@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F4C24E">
 <meta name="mobile-web-app-capable" content="yes">
@@ -144,13 +144,13 @@
 
     <!-- 地点板块：家里 / 现居地 -->
     <div class="wardrobe-places">
-      <div class="place-box">
+      <div class="place-box" id="place-home" data-loc="home">
         <h3>家里</h3>
-        <p class="place-note">尚未填写</p>
+        <p class="place-note" id="place-home-note">尚未填写</p>
       </div>
-      <div class="place-box">
+      <div class="place-box" id="place-residence" data-loc="residence">
         <h3>现居地</h3>
-        <p class="place-note">尚未填写</p>
+        <p class="place-note" id="place-residence-note">尚未填写</p>
       </div>
     </div>
 
@@ -379,6 +379,29 @@
   </div>
 </div>
 
+<!-- ============ 存入衣橱：选择地点 ============ -->
+<div class="modal" id="loc-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-loc">
+    <header class="modal-head">
+      <h3>这件单品放在哪？</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="modal-body loc-body">
+      <button class="loc-opt" id="loc-home" data-loc="home">
+        <span class="loc-ico"><svg viewBox="0 0 24 24" class="ico"><path d="M3 11l9-7 9 7M5 10v9h5v-5h4v5h5v-9"/></svg></span>
+        <span class="loc-title">家里</span>
+        <span class="loc-sub">归到「家里」板块</span>
+      </button>
+      <button class="loc-opt" id="loc-residence" data-loc="residence">
+        <span class="loc-ico"><svg viewBox="0 0 24 24" class="ico"><path d="M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+        <span class="loc-title">现居地</span>
+        <span class="loc-sub">归到「现居地」板块</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 单品详情 ============ -->
 <div class="modal" id="item-modal" hidden>
   <div class="modal-mask" data-close></div>
@@ -462,12 +485,12 @@
 <script src="js/color.js"></script>
 <script src="js/catalog.js?v=3"></script>
 <script src="js/segment.js?v=6"></script>
-<script src="js/store.js?v=6"></script>
-<script src="js/wardrobe.js?v=6"></script>
-<script src="js/studio.js?v=2"></script>
+<script src="js/store.js?v=7"></script>
+<script src="js/wardrobe.js?v=7"></script>
+<script src="js/studio.js?v=3"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/home.js?v=3"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/app.js?v=11"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

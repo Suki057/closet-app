@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, editing: null, editingSub: null, sortMode: false };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, sortMode: false };
 
   var el = {};
 
@@ -56,6 +56,7 @@
 
   function filtered() {
     var list = CL.store.itemsOf(state.cat, state.sub);
+    if (state.loc) list = list.filter(function (i) { return i.location === state.loc; });
     if (state.favOnly) list = list.filter(function (i) { return i.favorite; });
     var q = state.q.trim().toLowerCase();
     if (q) {
@@ -69,6 +70,7 @@
 
   function render() {
     renderCats();
+    renderPlaces();
     var list = filtered();
     if (el.empty) el.empty.hidden = list.length > 0 || CL.store.items().length > 0;
     if (!list.length && CL.store.items().length > 0) {
@@ -77,7 +79,9 @@
     }
     el.grid.innerHTML = list.map(function (i) {
       return '<article class="card' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
-        '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></div>' +
+        '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy">' +
+          (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
+        '</div>' +
         '<div class="card-info">' +
           '<span class="card-dot" style="background:' + esc(i.color) + '"></span>' +
           '<span class="card-name">' + esc(i.name) + '</span>' +
@@ -149,11 +153,40 @@
     render();
   }
 
+  /* ---------- 地点板块：家里 / 现居地 ---------- */
+
+  function renderPlaces() {
+    if (!el.placeHome) return;
+    var counts = { home: 0, residence: 0 };
+    CL.store.items().forEach(function (i) {
+      if (i.location === 'home') counts.home++;
+      else if (i.location === 'residence') counts.residence++;
+    });
+    el.placeHomeNote.textContent = counts.home ? (counts.home + ' 件单品') : '尚未填写';
+    el.placeResNote.textContent = counts.residence ? (counts.residence + ' 件单品') : '尚未填写';
+    el.placeHome.classList.toggle('is-active', state.loc === 'home');
+    el.placeRes.classList.toggle('is-active', state.loc === 'residence');
+  }
+
+  function onPlaceClick(e) {
+    var box = e.target.closest('.place-box[data-loc]');
+    if (!box) return;
+    var loc = box.dataset.loc;
+    state.loc = state.loc === loc ? null : loc;
+    state.cat = 'all';
+    state.sub = null;
+    render();
+  }
+
   function init() {
     el.cats = $('wardrobe-cats');
     el.subs = $('wardrobe-subs');
     el.grid = $('wardrobe-grid');
     el.empty = $('wardrobe-empty');
+    el.placeHome = $('place-home');
+    el.placeRes = $('place-residence');
+    el.placeHomeNote = $('place-home-note');
+    el.placeResNote = $('place-residence-note');
 
     function moveCategory(id, dir) {
       var cats = CL.catalog.CATEGORIES;
@@ -178,8 +211,14 @@
       if (!b || b.id === 'btn-add-cat' || b.id === 'btn-sort-cat') return;
       state.cat = b.dataset.cat;
       state.sub = null;
+      state.loc = null;
       render();
     });
+
+    if (el.placeHome) {
+      el.placeHome.addEventListener('click', onPlaceClick);
+      el.placeRes.addEventListener('click', onPlaceClick);
+    }
 
     el.cats.addEventListener('dblclick', function (e) {
       if (e.target.closest('[data-move]')) return;

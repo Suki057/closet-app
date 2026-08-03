@@ -85,6 +85,7 @@
         name: data.name || '未命名',
         category: data.category || 'top',
         sub: data.sub || null,
+        location: data.location || null,
         blob: data.blob,
         thumbBlob: data.thumbBlob,
         width: data.width, height: data.height,

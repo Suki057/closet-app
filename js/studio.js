@@ -8,6 +8,7 @@
   var picker = { view: 'cats', cat: null, selected: {}, selectedLooks: {} };
   var LOOKS_CAT = '__looks';
   var drag = null;
+  var resize = null;
   var mayOpen = false;
 
   function $(id) { return document.getElementById(id); }
@@ -81,7 +82,11 @@
       if (!it) return '';
       return '<div class="layer' + (state.sel === l.id ? ' is-sel' : '') + '" data-ly="' + l.id + '" ' +
         'style="left:' + l.x + '%;top:' + l.y + '%;width:' + l.w + '%;z-index:' + l.z + '">' +
-        '<img src="' + it.url + '" alt="' + esc(it.name) + '"></div>';
+        '<img src="' + it.url + '" alt="' + esc(it.name) + '">' +
+        (state.sel === l.id ? '<span class="resize-handle" title="拖动调整大小">' +
+          '<svg viewBox="0 0 24 24" class="ico">' +
+          '<path d="M4 4 L20 20"/><path d="M20 20 H14"/><path d="M20 20 V14"/></svg></span>' : '') +
+        '</div>';
     }).join('');
     el.mannequin.classList.toggle('hide', !state.showMannequin);
     el.toolbar.hidden = !state.sel;
@@ -245,6 +250,21 @@
   /* ---------------- 拖拽与调整 ---------------- */
 
   function onPointerDown(e) {
+    var handle = e.target.closest('.resize-handle');
+    if (handle) {
+      var hNode = handle.closest('.layer');
+      var hid = hNode && hNode.dataset.ly;
+      var hl = state.layers.find(function (x) { return x.id === hid; });
+      if (hl) {
+        state.sel = hid;
+        var hr = el.stage.getBoundingClientRect();
+        resize = { id: hid, sx: e.clientX, sw: hl.w, w: hr.width };
+        try { el.stage.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+    }
     var node = e.target.closest('.layer');
     if (!node) {
       state.sel = null;
@@ -260,10 +280,20 @@
     renderStage();
     var rect = el.stage.getBoundingClientRect();
     drag = { id: id, sx: e.clientX, sy: e.clientY, ox: l.x, oy: l.y, w: rect.width, h: rect.height, moved: false };
-    el.stage.setPointerCapture(e.pointerId);
+    try { el.stage.setPointerCapture(e.pointerId); } catch (err) {}
   }
 
   function onPointerMove(e) {
+    if (resize) {
+      var rl = state.layers.find(function (x) { return x.id === resize.id; });
+      if (!rl) return;
+      var ddx = (e.clientX - resize.sx) / resize.w * 100;
+      var nw = Math.max(6, Math.min(140, resize.sw + ddx * 2));
+      rl.w = nw;
+      var rnode = el.layers.querySelector('[data-ly="' + rl.id + '"]');
+      if (rnode) rnode.style.width = nw + '%';
+      return;
+    }
     if (drag) {
       var l = state.layers.find(function (x) { return x.id === drag.id; });
       if (!l) return;
@@ -281,6 +311,7 @@
   }
 
   function onPointerUp(e) {
+    if (resize) { try { el.stage.releasePointerCapture(e.pointerId); } catch (err) {} resize = null; return; }
     if (drag) { try { el.stage.releasePointerCapture(e.pointerId); } catch (err) {} }
     if (!drag && mayOpen) openPicker();
     drag = null; mayOpen = false;

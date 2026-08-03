@@ -197,6 +197,10 @@ button{cursor:pointer;border:none;background:none}
 }
 .wardrobe-places .place-box h3{font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.01em}
 .wardrobe-places .place-box .place-note{margin-top:5px;font-size:12px;color:var(--ink-3)}
+.wardrobe-places .place-box{cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
+.wardrobe-places .place-box:hover{transform:translateY(-1px);border-color:rgba(244,194,78,.5)}
+.wardrobe-places .place-box.is-active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow-1)}
+.wardrobe-places .place-box.is-active .place-note{color:var(--accent)}
 
 /* 衣橱主体：左侧类目竖排，右侧单品网格 */
 .wardrobe-layout{
@@ -276,6 +280,13 @@ button{cursor:pointer;border:none;background:none}
 .mini-btn:hover{color:var(--ink)}
 .mini-btn.on{color:var(--accent);}
 .mini-btn.on .ico{fill:var(--accent)}
+.card-loc{
+  position:absolute;top:8px;left:8px;height:21px;min-width:21px;padding:0 7px;border-radius:999px;
+  display:grid;place-items:center;font-size:11px;font-weight:700;color:#1c160b;letter-spacing:.04em;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);z-index:3;
+}
+.card-loc.is-home{background:var(--accent)}
+.card-loc.is-res{background:#9AD7C6}
 .card.is-fav .card-actions{opacity:1;transform:none}
 
 .empty{
@@ -372,6 +383,15 @@ button{cursor:pointer;border:none;background:none}
   0%,100%{filter:drop-shadow(0 10px 18px rgba(244,194,78,.22))}
   35%{filter:drop-shadow(0 0 0 rgba(176,141,87,.9)) drop-shadow(0 0 14px rgba(176,141,87,.7))}
 }
+/* 自由缩放手柄：选中单品后出现在右下角 */
+.layer .resize-handle{
+  position:absolute;right:-11px;bottom:-11px;width:24px;height:24px;
+  display:grid;place-items:center;border-radius:7px;cursor:se-resize;
+  background:var(--accent);color:#1c160b;box-shadow:0 3px 9px rgba(0,0,0,.45);
+  z-index:6;touch-action:none;
+}
+.layer .resize-handle svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.layer.is-sel{cursor:grab}
 .ghost-slot{
   position:absolute;transform:translateX(-50%);
   border:1.6px dashed var(--line-strong);border-radius:12px;
@@ -438,6 +458,22 @@ button{cursor:pointer;border:none;background:none}
 .modal-import{max-width:820px}
 .modal-item{max-width:660px}
 .modal-settings{max-width:460px}
+.modal-loc{max-width:420px}
+.loc-body{padding:20px;display:flex;flex-direction:column;gap:12px}
+.loc-opt{
+  display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:14px;text-align:left;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);
+  transition:border-color .18s,background .18s,transform .18s;
+}
+.loc-opt:hover{transform:translateY(-1px);border-color:rgba(244,194,78,.5);background:rgba(244,194,78,.08)}
+.loc-opt:active{transform:translateY(0)}
+.loc-ico{
+  width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:rgba(244,194,78,.16);color:var(--accent);
+}
+.loc-ico .ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.loc-title{display:block;font-size:15px;font-weight:600;letter-spacing:.02em}
+.loc-sub{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line)}
 .modal-head h3{font-size:15px;letter-spacing:.04em}
 .counter{font-size:12px;color:var(--ink-3);font-weight:500;margin-left:4px}
