@@ -220,11 +220,11 @@ button{cursor:pointer;border:none;background:none}
   border-top:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   box-shadow:0 -8px 24px rgba(0,0,0,.35);
-  padding:14px 0 16px;
+  padding:6px 0 16px;
 }
 .cat-bottom-bar .cat-rail{
   display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-  padding:0 24px;
+  padding:8px 24px 0;
   max-width:1340px;margin:0 auto;
 }
 .cat-bottom-bar .cat-rail::-webkit-scrollbar{display:none}
@@ -752,8 +752,8 @@ button{cursor:pointer;border:none;background:none}
   .wardrobe-places{padding:12px 14px 2px;gap:8px}
   .wardrobe-head{padding:14px 14px 10px}
   .wardrobe-body{padding:4px 14px 120px}
-  .cat-bottom-bar{padding:12px 0 14px}
-  .cat-bottom-bar .cat-rail{padding:0 14px}
+  .cat-bottom-bar{padding:6px 0 14px}
+  .cat-bottom-bar .cat-rail{padding:6px 14px 0}
   .cat-bottom-bar .sub-rail{padding:6px 14px 0}
   .cat-bottom-bar .chip{height:44px;padding:0 14px;font-size:12.5px}
   .page-deco{display:none}
