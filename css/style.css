@@ -556,6 +556,11 @@ button{cursor:pointer;border:none;background:none}
   background:linear-gradient(120deg,var(--accent),var(--accent-2));
   -webkit-background-clip:text;background-clip:text;color:transparent;}
 .hero-sub{margin-top:16px;font-size:14.5px;color:var(--ink-2);max-width:440px;padding-left:22px;line-height:1.7}
+.hero-title.affirm{font-size:26px;line-height:1.42;font-weight:600;letter-spacing:-.01em;padding-left:20px;
+  background:linear-gradient(120deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-title.affirm .line{display:block;margin-bottom:10px;}
+.hero-title.affirm .line:last-child{margin-bottom:0;}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;padding-left:22px}
 
 /* 衣橱页顶部：三个概览小盒，一行排开，两端对齐 */
@@ -587,6 +592,7 @@ button{cursor:pointer;border:none;background:none}
   .home{padding:20px 14px 54px}
   .home-hero{padding:30px 24px}
   .hero-title{font-size:30px}
+  .hero-title.affirm{font-size:22px;line-height:1.5}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
   .page-deco{display:none}
 }
@@ -846,6 +852,7 @@ button{cursor:pointer;border:none;background:none}
   .ward-tools .search input{width:100%;min-width:120px}
   .home-hero{padding:26px 20px}
   .hero-title{font-size:26px}
+  .hero-title.affirm{font-size:19px;line-height:1.55}
   .grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
   /* 弹窗贴近屏幕，更像原生 App */
   .modal{padding:0}
