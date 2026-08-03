@@ -70,7 +70,7 @@
   function render() {
     renderCats();
     var list = filtered();
-    el.empty.hidden = list.length > 0 || CL.store.items().length > 0;
+    if (el.empty) el.empty.hidden = list.length > 0 || CL.store.items().length > 0;
     if (!list.length && CL.store.items().length > 0) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>没有匹配的单品</h3><p>换个类目或关键词试试。</p></div>';
       return;

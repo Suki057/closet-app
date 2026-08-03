@@ -226,7 +226,7 @@ button{cursor:pointer;border:none;background:none}
 
 .wardrobe-body{padding:6px 0 64px}
 .looks-head-box{
-  position:relative;overflow:hidden;width:fit-content;max-width:90%;margin:6px auto 18px;padding:14px 28px;
+  position:relative;overflow:hidden;max-width:1340px;width:auto;margin:0 auto 18px;padding:18px 24px;
   border-radius:20px;cursor:text;
   background:linear-gradient(160deg, rgba(40,34,58,.72), rgba(18,14,28,.72));
   border:1px solid var(--line);box-shadow:var(--shadow-1);
