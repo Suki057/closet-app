@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=22">
+<link rel="stylesheet" href="css/style.css?v=24">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F4C24E">
 <meta name="mobile-web-app-capable" content="yes">
@@ -144,22 +144,38 @@
       </button>
     </div>
 
-    <div class="wardrobe-head">
-      <div class="cat-rail" id="wardrobe-cats"></div>
-      <div class="sub-rail" id="wardrobe-subs" hidden></div>
-      <div class="ward-tools">
-        <label class="search">
-          <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input type="text" id="search-input" placeholder="搜索名称、颜色、标签">
-        </label>
-        <button class="chip chip-toggle" id="fav-filter" title="只看收藏">
-          <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
-          收藏
-        </button>
-        <button class="chip" id="btn-add-cat" title="添加分类">+ 添加分类</button>
-        <button class="chip chip-toggle" id="btn-sort-cat" title="排序分类">⇅ 排序</button>
+    <!-- 地点板块：家里 / 现居地 -->
+    <div class="wardrobe-places">
+      <div class="place-box">
+        <h3>家里</h3>
+        <p class="place-note">尚未填写</p>
+      </div>
+      <div class="place-box">
+        <h3>现居地</h3>
+        <p class="place-note">尚未填写</p>
       </div>
     </div>
+
+    <div class="wardrobe-layout">
+      <aside class="cat-sidebar">
+        <div class="cat-rail" id="wardrobe-cats"></div>
+        <div class="sub-rail" id="wardrobe-subs" hidden></div>
+      </aside>
+      <div class="wardrobe-main">
+        <div class="wardrobe-head">
+          <div class="ward-tools">
+            <label class="search">
+              <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <input type="text" id="search-input" placeholder="搜索名称、颜色、标签">
+            </label>
+            <button class="chip chip-toggle" id="fav-filter" title="只看收藏">
+              <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
+              收藏
+            </button>
+            <button class="chip" id="btn-add-cat" title="添加分类">+ 添加分类</button>
+            <button class="chip chip-toggle" id="btn-sort-cat" title="排序分类">⇅ 排序</button>
+          </div>
+        </div>
 
     <div class="wardrobe-body">
       <div class="grid" id="wardrobe-grid"></div>
@@ -177,6 +193,7 @@
         <h3>衣橱还是空的</h3>
         <p>把衣服平铺在浅色背景上拍一张，导入后会自动抠出主体并归类。</p>
         <button class="btn btn-primary" data-action="add">导入第一件单品</button>
+      </div>
       </div>
     </div>
   </section>
@@ -239,9 +256,7 @@
       <svg class="pdeco pd-bow" viewBox="0 0 64 64"><path d="M32 32 L11 21 L11 43 Z" fill="#FFE9A8"/><path d="M32 32 L53 21 L53 43 Z" fill="#FFE9A8"/><circle cx="32" cy="32" r="6.5" fill="#F4C24E"/></svg>
       <span class="pdeco pd-star"></span>
     </div>
-      <h2>我的搭配</h2>
-      <p class="hint">点击可载入搭配间继续调整</p>
-    </div>
+      <div class="looks-head-box">我的搭配</div>
     <div class="looks-grid" id="looks-grid"></div>
     <div class="empty" id="looks-empty" hidden>
         <div class="empty-art">

@@ -162,6 +162,7 @@ button{cursor:pointer;border:none;background:none}
   height:34px;padding:0 14px;border-radius:999px;
   background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);
   color:var(--ink-2);font-size:13px;font-weight:500;transition:.16s;
+  white-space:nowrap;
 }
 .chip:hover{color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-strong)}
 .chip .ico{width:15px;height:15px;opacity:.7}
@@ -186,10 +187,32 @@ button{cursor:pointer;border:none;background:none}
 .sort-arrow.is-disabled{color:var(--line-strong);cursor:default;background:transparent}
 
 /* ---------------- wardrobe ---------------- */
+/* 地点板块：家里 / 现居地 */
+.wardrobe-places{display:flex;gap:12px;max-width:1340px;margin:0 auto;padding:14px 24px 4px}
+.wardrobe-places .place-box{
+  flex:1;min-width:0;padding:14px 16px;border-radius:16px;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-1);
+}
+.wardrobe-places .place-box h3{font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.01em}
+.wardrobe-places .place-box .place-note{margin-top:5px;font-size:12px;color:var(--ink-3)}
+
+/* 衣橱主体：左侧类目竖排，右侧单品网格 */
+.wardrobe-layout{
+  display:flex;gap:22px;align-items:flex-start;
+  max-width:1340px;margin:0 auto;padding:4px 24px 64px;
+}
+.cat-sidebar{
+  position:sticky;top:84px;flex:none;width:208px;
+  display:flex;flex-direction:column;gap:8px;
+  max-height:calc(100vh - 104px);overflow:auto;padding:4px;
+}
+.cat-sidebar .cat-rail{display:flex;flex-direction:column;align-items:stretch;gap:7px;flex-wrap:nowrap}
+.cat-sidebar .chip{width:100%;justify-content:flex-start;border-radius:12px;height:40px}
+.cat-sidebar .sub-rail{margin-top:2px}
+.wardrobe-main{flex:1;min-width:0}
 .wardrobe-head{
   display:flex;gap:16px;align-items:flex-start;justify-content:space-between;
-  padding:26px 24px 16px;flex-wrap:wrap;
-  max-width:1340px;margin:0 auto;
+  padding:20px 0 14px;flex-wrap:wrap;
 }
 .wardrobe-head h1{font-size:24px;letter-spacing:.01em}
 .ward-tools{display:flex;gap:8px;align-items:center}
@@ -201,7 +224,18 @@ button{cursor:pointer;border:none;background:none}
 .search input{border:none;outline:none;background:none;width:180px;font-size:13px;color:var(--ink)}
 .search input::placeholder{color:var(--ink-3)}
 
-.wardrobe-body{max-width:1340px;margin:0 auto;padding:6px 24px 64px}
+.wardrobe-body{padding:6px 0 64px}
+.looks-head-box{
+  position:relative;overflow:hidden;max-width:1340px;margin:0 auto 18px;padding:18px 24px;
+  border-radius:20px;
+  background:linear-gradient(160deg, rgba(40,34,58,.72), rgba(18,14,28,.72));
+  border:1px solid var(--line);box-shadow:var(--shadow-1);
+  font-size:20px;font-weight:700;letter-spacing:.01em;color:var(--accent);
+}
+.looks-head-box::before{
+  content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));
+}
 .grid{
   display:grid;gap:16px;
   grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
@@ -594,6 +628,13 @@ button{cursor:pointer;border:none;background:none}
   .hero-title{font-size:30px}
   .hero-title.affirm{font-size:22px;line-height:1.5}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
+  .wardrobe-places{padding:12px 14px 2px;gap:8px}
+  .wardrobe-layout{flex-direction:column;padding:4px 14px 50px;gap:14px}
+  .cat-sidebar{width:100%;position:static;flex-direction:row;max-height:none;overflow-x:auto;padding:0}
+  .cat-sidebar .cat-rail{flex-direction:row;flex-wrap:nowrap}
+  .cat-sidebar .chip{width:auto;flex:none;height:36px}
+  .wardrobe-head{padding:16px 0 12px}
+  .wardrobe-body{padding:4px 0 50px}
   .page-deco{display:none}
 }
 
@@ -848,8 +889,9 @@ button{cursor:pointer;border:none;background:none}
   .cat-rail::-webkit-scrollbar,.sub-rail::-webkit-scrollbar{display:none}
   .cat-rail .chip,.sub-rail .sub-chip{flex:none}
   .wardrobe-head{gap:10px}
+  .ward-tools{flex-wrap:wrap}
   .ward-tools .search{flex:1}
-  .ward-tools .search input{width:100%;min-width:120px}
+  .ward-tools .search input{width:100%;min-width:90px}
   .home-hero{padding:26px 20px}
   .hero-title{font-size:26px}
   .hero-title.affirm{font-size:19px;line-height:1.55}
