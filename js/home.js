@@ -20,30 +20,12 @@
     $('stat-looks').textContent = looks.length;
     $('stat-cats').textContent = usedCats;
 
-    // 最近导入：最多 8 件，复用衣橱卡片样式
-    var recent = items.slice(0, 8);
-    $('home-recent').innerHTML = recent.map(function (i) {
-      return '<article class="card" data-id="' + i.id + '">' +
-        '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></div>' +
-        '<div class="card-info">' +
-          '<span class="card-dot" style="background:' + esc(i.color) + '"></span>' +
-          '<span class="card-name">' + esc(i.name) + '</span>' +
-          '<span class="card-cat">' + esc(CL.catalog.name(i.category)) + '</span>' +
-        '</div></article>';
-    }).join('');
-
-    var empty = items.length === 0;
-    $('home-empty').hidden = !empty;
-    $('home-recent-section').hidden = empty;
+    // 首页不再展示已添加的单品，维持「添加单品」引导板块
+    $('home-recent-section').hidden = true;
+    $('home-empty').hidden = false;
   }
 
   function init() {
-    $('home-recent').addEventListener('click', function (e) {
-      var card = e.target.closest('.card');
-      if (!card) return;
-      CL.wardrobe.openItem(card.dataset.id);
-    });
-
     CL.store.on('items', render);
     CL.store.on('looks', render);
     render();
