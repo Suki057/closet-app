@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false, railDragged: false };
 
   var el = {};
 
@@ -185,6 +185,8 @@
     el.placeResNote = $('place-residence-note');
 
     el.cats.addEventListener('click', function (e) {
+      // 刚刚是横向拖动滚动，不当作点击（避免拖动时误触 × 删除分类）
+      if (state.railDragged) { state.railDragged = false; return; }
       var del = e.target.closest('.cat-del');
       if (del) {
         e.stopPropagation();
@@ -311,23 +313,29 @@
       }
 
       rail.addEventListener('pointerdown', function (e) {
-        if (state.manageMode) return;
-        var chip = e.target.closest('.chip[data-cat]');
-        if (chip && chip.dataset.cat !== 'all') {
-          sort.startX = e.clientX; sort.startY = e.clientY;
-          sort.id = chip.dataset.cat; sort.chip = chip; sort.pointerId = e.pointerId;
-          clearLongPress();
-          sort.timer = setTimeout(function () {
-            // 进入排序模式
-            sort.active = true;
-            sort.order = CL.catalog.CATEGORIES.slice();
-            rail.classList.add('is-sorting');
-            chip.classList.add('is-dragging');
-            try { rail.setPointerCapture(e.pointerId); } catch (err) {}
-            CL.ui.toast('拖动调整分类顺序', 1200);
-          }, LONG_PRESS);
+        // 每次按下重置「本次是否发生过拖动」标记（用于拖动后抑制 click 误触）
+        state.railDragged = false;
+        sort.startX = e.clientX; sort.startY = e.clientY;
+
+        // 管理模式下不启用长按排序，但横向滚动仍然可用
+        if (!state.manageMode) {
+          var chip = e.target.closest('.chip[data-cat]');
+          if (chip && chip.dataset.cat !== 'all') {
+            sort.id = chip.dataset.cat; sort.chip = chip; sort.pointerId = e.pointerId;
+            clearLongPress();
+            sort.timer = setTimeout(function () {
+              // 进入排序模式
+              sort.active = true;
+              sort.order = CL.catalog.CATEGORIES.slice();
+              rail.classList.add('is-sorting');
+              chip.classList.add('is-dragging');
+              try { rail.setPointerCapture(e.pointerId); } catch (err) {}
+              CL.ui.toast('拖动调整分类顺序', 1200);
+            }, LONG_PRESS);
+          }
         }
-        // 同时启动横向滚动检测
+
+        // 横向滚动检测（管理模式下同样启用）
         scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
         scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
         rail.style.cursor = 'grabbing';
@@ -347,6 +355,7 @@
         if (!scroll.isDown) return;
         var dx = e.clientX - sort.startX;
         var dy = e.clientY - sort.startY;
+        if (Math.abs(dx) > MOVE_THRESHOLD) state.railDragged = true; // 拖动过，松手后抑制 click
         if (sort.timer && (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD)) {
           clearLongPress(); // 手指滑动则取消长按
         }

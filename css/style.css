@@ -254,6 +254,7 @@ button{cursor:pointer;border:none;background:none}
   color:#fff;box-shadow:0 10px 30px rgba(244,194,78,.38),inset 0 0 0 1px rgba(255,255,255,.16);
   z-index:10;cursor:grabbing;
 }
+.cat-bottom-bar .cat-rail{touch-action:pan-y}
 .cat-bottom-bar .chip{touch-action:pan-y;user-select:none;-webkit-user-select:none;position:relative}
 .cat-bottom-bar .chip.is-managing{padding-left:28px}
 .cat-del{
