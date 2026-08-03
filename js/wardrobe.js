@@ -93,6 +93,8 @@
             '<svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg></button>' +
           '<button class="mini-btn" data-act="wear" title="加入搭配">' +
             '<svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg></button>' +
+          '<button class="mini-btn" data-act="trash" title="移入回收站">' +
+            '<svg viewBox="0 0 24 24" class="ico"><path d="M6 7h12M9 7V5h6v2M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button>' +
         '</div>' +
       '</article>';
     }).join('');
@@ -277,6 +279,10 @@
           CL.studio.wear(id);
           CL.app.go('studio');
           CL.ui.toast('已加入搭配');
+        } else if (act.dataset.act === 'trash') {
+          CL.studio.takeOffItem(id);
+          CL.store.deleteItem(id);
+          CL.ui.toast('已移入回收站');
         }
         return;
       }
@@ -301,11 +307,11 @@
     $('btn-delete-item').addEventListener('click', function () {
       var id = state.editing;
       if (!id) return;
-      if (!confirm('确定删除这件单品？')) return;
+      if (!confirm('确定把这件单品移入回收站吗？\n7 天内可在「回收站」恢复。')) return;
       CL.studio.takeOffItem(id);
       CL.store.deleteItem(id).then(function () {
         CL.ui.closeModal('item-modal');
-        CL.ui.toast('已删除');
+        CL.ui.toast('已移入回收站');
       });
     });
 

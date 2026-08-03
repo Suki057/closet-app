@@ -5,7 +5,8 @@
   var db = global.CL.db;
   var items = [];
   var looks = [];
-  var listeners = { items: [], looks: [] };
+  var listeners = { items: [], looks: [], trash: [] };
+  var TRASH_TTL = 7 * 24 * 3600 * 1000; // 回收站保留 7 天
 
   function uid(prefix) {
     return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -36,6 +37,8 @@
     listeners[kind].forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
   }
 
+  function liveItems() { return items.filter(function (i) { return !i.deletedAt; }); }
+
   var store = {
     on: function (kind, fn) { listeners[kind].push(fn); },
 
@@ -51,23 +54,34 @@
     },
 
     /* ---- items ---- */
-    items: function () { return items; },
+    items: function () { return liveItems(); },
     itemsOf: function (cat, sub) {
+      var list = liveItems();
       if (!cat || cat === 'all') {
-        return sub ? items.filter(function (i) { return i.sub === sub; }) : items;
+        return sub ? list.filter(function (i) { return i.sub === sub; }) : list;
       }
-      var list = items.filter(function (i) { return i.category === cat; });
+      list = list.filter(function (i) { return i.category === cat; });
       if (sub) list = list.filter(function (i) { return i.sub === sub; });
       return list;
     },
     getItem: function (id) {
-      for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === id) return items[i].deletedAt ? null : items[i];
+      }
       return null;
     },
     countBy: function () {
-      var m = { all: items.length };
-      items.forEach(function (i) { m[i.category] = (m[i.category] || 0) + 1; });
+      var m = { all: 0 };
+      items.forEach(function (i) {
+        if (i.deletedAt) return;
+        m.all++;
+        m[i.category] = (m[i.category] || 0) + 1;
+      });
       return m;
+    },
+    trashedItems: function () {
+      return items.filter(function (i) { return i.deletedAt; })
+        .sort(function (a, b) { return b.deletedAt - a.deletedAt; });
     },
     countBySub: function (cat) {
       var m = {};
@@ -109,12 +123,41 @@
     },
 
     deleteItem: function (id) {
+      var it = items.find(function (i) { return i.id === id; });
+      if (!it) return Promise.resolve();
+      it.deletedAt = Date.now();
+      emit('items'); emit('trash');
+      return db.put('items', persistable(it)).then(function () { return it; });
+    },
+
+    restoreItem: function (id) {
+      var it = items.find(function (i) { return i.id === id; });
+      if (!it) return Promise.resolve();
+      it.deletedAt = null;
+      emit('items'); emit('trash');
+      return db.put('items', persistable(it)).then(function () { return it; });
+    },
+
+    purgeItem: function (id) {
       var idx = items.findIndex(function (i) { return i.id === id; });
       if (idx < 0) return Promise.resolve();
       release(items[idx]);
       items.splice(idx, 1);
-      emit('items');
+      emit('items'); emit('trash');
       return db.remove('items', id);
+    },
+
+    purgeExpired: function () {
+      var now = Date.now();
+      var expired = items.filter(function (i) { return i.deletedAt && (now - i.deletedAt) > TRASH_TTL; });
+      if (!expired.length) return Promise.resolve();
+      expired.forEach(function (it) {
+        var idx = items.indexOf(it);
+        if (idx >= 0) { release(it); items.splice(idx, 1); }
+        db.remove('items', it.id);
+      });
+      emit('items'); emit('trash');
+      return Promise.resolve();
     },
 
     /* ---- looks ---- */

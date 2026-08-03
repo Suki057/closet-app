@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=32">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F4C24E">
 <meta name="mobile-web-app-capable" content="yes">
@@ -33,6 +33,7 @@
     <button class="tab" data-view="wardrobe">衣橱</button>
     <button class="tab" data-view="studio">搭配间</button>
     <button class="tab" data-view="looks">搭配集</button>
+    <button class="tab" data-view="trash">回收站</button>
   </nav>
 
   <div class="topbar-actions">
@@ -256,6 +257,29 @@
     </div>
   </section>
 
+  <!-- ============ 回收站 ============ -->
+  <section class="view" id="view-trash">
+    <div class="trash-view">
+      <div class="trash-head">
+        <h2>回收站</h2>
+        <button class="btn btn-ghost danger btn-sm" id="trash-clear" hidden>清空回收站</button>
+      </div>
+      <p class="trash-tip">删除的单品会暂存在这里，保留 7 天后自动永久清除。可随时恢复或立即永久删除。</p>
+      <div class="grid" id="trash-grid"></div>
+      <div class="empty" id="trash-empty" hidden>
+        <div class="empty-art">
+          <svg class="art" viewBox="0 0 120 120">
+            <path d="M40 44 h40 l-3 56 H43 Z" style="fill:rgba(255,134,198,.18)" stroke-width="2.6" stroke-linejoin="round"/>
+            <path d="M36 44 h48 M48 44 v-6 h24 v6 M52 56 v34 M68 56 v34" stroke-width="2.6" stroke-linecap="round"/>
+            <circle cx="60" cy="40" r="3" style="fill:#F4C24E;stroke:none"/>
+          </svg>
+        </div>
+        <h3>回收站是空的</h3>
+        <p>删除的单品会出现在这里，7 天内都能找回来。</p>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- ============ 搭配间选品弹窗 ============ -->
@@ -432,7 +456,7 @@
       </div>
     </div>
     <footer class="modal-foot spread">
-      <button class="btn btn-ghost danger" id="btn-delete-item">删除</button>
+      <button class="btn btn-ghost danger" id="btn-delete-item">移入回收站</button>
       <div class="foot-right">
         <button class="btn btn-soft" id="btn-wear-item">加入搭配</button>
         <button class="btn btn-primary" id="btn-update-item">保存修改</button>
@@ -485,12 +509,13 @@
 <script src="js/color.js"></script>
 <script src="js/catalog.js?v=3"></script>
 <script src="js/segment.js?v=6"></script>
-<script src="js/store.js?v=7"></script>
-<script src="js/wardrobe.js?v=7"></script>
+<script src="js/store.js?v=8"></script>
+<script src="js/wardrobe.js?v=8"></script>
 <script src="js/studio.js?v=3"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/home.js?v=4"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/trash.js?v=1"></script>
+<script src="js/app.js?v=12"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

@@ -65,6 +65,7 @@
     document.querySelectorAll('.tab').forEach(function (t) {
       t.classList.toggle('is-active', t.dataset.view === view);
     });
+    if (view === 'trash' && CL.trash) CL.trash.render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -464,10 +465,14 @@
       CL.studio.init();
       CL.looks.init();
       CL.home.init();
+      CL.trash.init();
       applySettings();
       refreshStat();
       CL.store.on('items', refreshStat);
       CL.store.on('looks', refreshStat);
+      // 回收站：启动时清理过期单品，并每小时复查一次
+      CL.store.purgeExpired();
+      setInterval(function () { CL.store.purgeExpired(); }, 60 * 60 * 1000);
       if (CL.db.isMemoryMode()) {
         ui.toast('当前环境无法持久化存储，数据仅保留在本次会话', 4000);
       }
