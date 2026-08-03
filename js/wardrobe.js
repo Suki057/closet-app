@@ -255,6 +255,43 @@
       render();
     });
 
+    // 底部分类导航栏可拖动横向滚动
+    [el.cats, el.subs].forEach(function (rail) {
+      if (!rail) return;
+      var isDown = false, startX, scrollLeft, vel = 0, raf = null, lastT, lastSL;
+      function decay() {
+        if (Math.abs(vel) < 0.5) { raf = null; return; }
+        rail.scrollLeft += vel;
+        vel *= 0.92;
+        raf = requestAnimationFrame(decay);
+      }
+      rail.addEventListener('pointerdown', function (e) {
+        isDown = true; startX = e.clientX; scrollLeft = rail.scrollLeft; vel = 0; lastT = Date.now(); lastSL = scrollLeft;
+        rail.setPointerCapture(e.pointerId);
+        rail.style.cursor = 'grabbing';
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+      });
+      rail.addEventListener('pointermove', function (e) {
+        if (!isDown) return;
+        var dx = startX - e.clientX;
+        rail.scrollLeft = scrollLeft + dx;
+        var now = Date.now();
+        vel = (rail.scrollLeft - lastSL) / (now - lastT || 1) * 16 || 0;
+        lastSL = rail.scrollLeft; lastT = now;
+      });
+      rail.addEventListener('pointerup', function (e) {
+        isDown = false;
+        try { rail.releasePointerCapture(e.pointerId); } catch (err) {}
+        rail.style.cursor = '';
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(decay);
+      });
+      rail.addEventListener('pointercancel', function (e) {
+        isDown = false; rail.style.cursor = '';
+      });
+      rail.addEventListener('pointerleave', function () { isDown = false; rail.style.cursor = ''; });
+    });
+
     $('search-input').addEventListener('input', function (e) {
       state.q = e.target.value; render();
     });

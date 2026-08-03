@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=32">
+<link rel="stylesheet" href="css/style.css?v=33">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F4C24E">
 <meta name="mobile-web-app-capable" content="yes">
@@ -155,30 +155,30 @@
       </div>
     </div>
 
-    <div class="wardrobe-layout">
-      <aside class="cat-sidebar">
-        <div class="cat-rail" id="wardrobe-cats"></div>
-        <div class="sub-rail" id="wardrobe-subs" hidden></div>
-      </aside>
-      <div class="wardrobe-main">
-        <div class="wardrobe-head">
-          <div class="ward-tools">
-            <label class="search">
-              <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-              <input type="text" id="search-input" placeholder="搜索名称、颜色、标签">
-            </label>
-            <button class="chip chip-toggle" id="fav-filter" title="只看收藏">
-              <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
-              收藏
-            </button>
-            <button class="chip" id="btn-add-cat" title="添加分类">+ 添加分类</button>
-            <button class="chip chip-toggle" id="btn-sort-cat" title="排序分类">⇅ 排序</button>
-          </div>
-        </div>
+    <div class="wardrobe-head">
+      <div class="ward-tools">
+        <label class="search">
+          <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input type="text" id="search-input" placeholder="搜索名称、颜色、标签">
+        </label>
+        <button class="chip chip-toggle" id="fav-filter" title="只看收藏">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M12 17.3l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1z"/></svg>
+          收藏
+        </button>
+        <button class="chip" id="btn-add-cat" title="添加分类">+ 添加分类</button>
+        <button class="chip chip-toggle" id="btn-sort-cat" title="排序分类">⇅ 排序</button>
+      </div>
+    </div>
 
     <div class="wardrobe-body">
       <div class="grid" id="wardrobe-grid"></div>
     </div>
+
+    <!-- 底部可拖动分类导航 -->
+    <nav class="cat-bottom-bar" aria-label="分类导航">
+      <div class="cat-rail" id="wardrobe-cats"></div>
+      <div class="sub-rail" id="wardrobe-subs" hidden></div>
+    </nav>
   </section>
 
   <!-- ============ 搭配间 ============ -->
@@ -510,7 +510,7 @@
 <script src="js/catalog.js?v=3"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=8"></script>
-<script src="js/wardrobe.js?v=8"></script>
+<script src="js/wardrobe.js?v=9"></script>
 <script src="js/studio.js?v=3"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/home.js?v=4"></script>
