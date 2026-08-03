@@ -19,6 +19,8 @@
   --irid:linear-gradient(135deg,#FF8FD6 0%,#79E6FF 35%,#B79BFF 65%,#8BFFCB 100%);
   --serif:"Fredoka","Baloo 2","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --title-font:var(--serif);
+  /* 优雅中文衬线（思源宋体 / 宋体），用于首页宣言 */
+  --serif-cn:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC","SimSun","NSimSun",serif;
   --active-bg:linear-gradient(135deg,#FFE9A8 0%,#F4C24E 52%,#D99A2E 100%);
   --active-ink:#2A1E05;
   --radius:22px;
@@ -596,10 +598,27 @@ button{cursor:pointer;border:none;background:none}
   background:linear-gradient(120deg,var(--accent),var(--accent-2));
   -webkit-background-clip:text;background-clip:text;color:transparent;}
 .hero-sub{margin-top:16px;font-size:14.5px;color:var(--ink-2);max-width:440px;padding-left:22px;line-height:1.7}
-.hero-title.affirm{font-size:20px;line-height:1.5;font-weight:600;letter-spacing:-.01em;padding-left:20px;
-  color:#FFFFFF;background:none;-webkit-background-clip:initial;background-clip:initial;}
-.hero-title.affirm .line{display:block;margin-bottom:10px;}
-.hero-title.affirm .line:last-child{margin-bottom:0;}
+.hero-title.affirm{
+  counter-reset:affirm-line;
+  font-family:var(--serif-cn);
+  font-size:20px;line-height:1.85;font-weight:500;letter-spacing:.02em;
+  color:#F2ECF8;padding-left:22px;
+}
+.hero-title.affirm .line{
+  display:block;position:relative;padding-left:34px;margin-bottom:13px;
+}
+.hero-title.affirm .line::before{
+  counter-increment:affirm-line;
+  content:counter(affirm-line,decimal-leading-zero);
+  position:absolute;left:0;top:4px;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",system-ui,sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent);
+}
+.hero-title.affirm .line-soft{
+  margin-top:8px;padding-left:34px;font-size:15px;line-height:1.7;color:var(--ink-2);
+}
+.hero-title.affirm .line-soft::before{content:none;}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;padding-left:22px}
 
 /* 衣橱页顶部：三个概览小盒，一行排开，两端对齐 */
@@ -625,14 +644,15 @@ button{cursor:pointer;border:none;background:none}
 .home-section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 .home-section-head h2{font-size:19px;letter-spacing:.02em}
 
-.home-empty{padding-top:36px;margin-top:-14px}
+.home-empty{padding-top:36px;margin-top:-14px;gap:14px}
+.home-empty-cta{margin:0;font-family:var(--serif-cn);font-size:15px;padding:13px 30px;letter-spacing:.03em}
 .home-empty-tip{margin-top:10px;font-size:12px;color:var(--ink-3)}
 
 @media (max-width:760px){
   .home{padding:20px 14px 54px}
   .home-hero{padding:44px 24px}
   .hero-title{font-size:30px}
-  .hero-title.affirm{font-size:16px;line-height:1.55}
+  .hero-title.affirm{font-size:16px;line-height:1.75}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
   .wardrobe-places{padding:12px 14px 2px;gap:8px}
   .wardrobe-layout{flex-direction:column;padding:4px 14px 50px;gap:0}
@@ -902,7 +922,7 @@ button{cursor:pointer;border:none;background:none}
   .ward-tools .search input{width:72px}
   .home-hero{padding:40px 20px}
   .hero-title{font-size:26px}
-  .hero-title.affirm{font-size:13px;line-height:1.6}
+  .hero-title.affirm{font-size:14px;line-height:1.7}
   .grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
   /* 弹窗贴近屏幕，更像原生 App */
   .modal{padding:0}
