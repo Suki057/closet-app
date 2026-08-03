@@ -210,7 +210,7 @@ button{cursor:pointer;border:none;background:none}
 .search input::placeholder{color:var(--ink-3)}
 
 .wardrobe-body{
-  max-width:1340px;margin:0 auto;padding:6px 24px 124px;
+  max-width:1340px;margin:0 auto;padding:6px 24px 100px;
 }
 
 /* 底部可拖动分类导航 */
@@ -220,7 +220,7 @@ button{cursor:pointer;border:none;background:none}
   border-top:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   box-shadow:0 -8px 24px rgba(0,0,0,.35);
-  padding:8px 0 14px;
+  padding:6px 0 8px;
 }
 .cat-bottom-bar .cat-rail{
   display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -229,7 +229,7 @@ button{cursor:pointer;border:none;background:none}
 }
 .cat-bottom-bar .cat-rail::-webkit-scrollbar{display:none}
 .cat-bottom-bar .chip{
-  flex:none;height:44px;padding:0 16px;border-radius:12px;
+  flex:none;height:38px;padding:0 14px;border-radius:12px;
   justify-content:flex-start;background:var(--surface);
   box-shadow:inset 0 0 0 1px var(--line);
 }
@@ -239,7 +239,7 @@ button{cursor:pointer;border:none;background:none}
 }
 .cat-bottom-bar .sub-rail{
   display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-  padding:8px 24px 0;margin-top:2px;
+  padding:4px 24px 0;margin-top:2px;
   max-width:1340px;margin:0 auto;
 }
 .cat-bottom-bar .sub-rail[hidden]{display:none}
@@ -666,7 +666,7 @@ button{cursor:pointer;border:none;background:none}
   .tabs{margin:0 auto 0 4px}
   .tab{padding:8px 12px;font-size:13px}
   .wardrobe-head{padding:18px 14px 10px}
-  .wardrobe-body{padding:4px 14px 116px}
+  .wardrobe-body{padding:4px 14px 92px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:11px}
   .studio,.looks-grid,.looks-head{padding-left:14px;padding-right:14px}
   .search input{width:110px}
@@ -751,11 +751,11 @@ button{cursor:pointer;border:none;background:none}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
   .wardrobe-places{padding:12px 14px 2px;gap:8px}
   .wardrobe-head{padding:14px 14px 10px}
-  .wardrobe-body{padding:4px 14px 116px}
-  .cat-bottom-bar{padding:6px 0 12px}
+  .wardrobe-body{padding:4px 14px 92px}
+  .cat-bottom-bar{padding:4px 0 6px}
   .cat-bottom-bar .cat-rail{padding:0 14px}
-  .cat-bottom-bar .sub-rail{padding:6px 14px 0}
-  .cat-bottom-bar .chip{height:42px;padding:0 14px;font-size:12.5px}
+  .cat-bottom-bar .sub-rail{padding:3px 14px 0}
+  .cat-bottom-bar .chip{height:36px;padding:0 14px;font-size:12.5px}
   .page-deco{display:none}
 }
 
