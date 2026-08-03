@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, sortMode: false };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null };
 
   var el = {};
 
@@ -19,21 +19,14 @@
     });
   }
 
-  function sortArrows(idx, total) {
-    if (!state.sortMode || total <= 1) return '';
-    var up = idx > 0 ? '<span class="sort-arrow" data-move="up" title="前移">▲</span>' : '<span class="sort-arrow is-disabled">▲</span>';
-    var down = idx < total - 1 ? '<span class="sort-arrow" data-move="down" title="后移">▼</span>' : '<span class="sort-arrow is-disabled">▼</span>';
-    return '<span class="sort-arrows">' + up + down + '</span>';
-  }
-
   function renderCats() {
     var counts = CL.store.countBy();
     var total = CL.catalog.CATEGORIES.length;
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
     CL.catalog.CATEGORIES.forEach(function (c, idx) {
-      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + (state.sortMode ? ' is-sort' : '') + '" data-cat="' + c.id + '" title="双击修改名称">' +
-        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span>' + sortArrows(idx, total) + '</button>';
+      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '" title="双击修改名称，长按拖拽排序">' +
+        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
     });
     el.cats.innerHTML = html;
     renderSubs();
@@ -190,27 +183,9 @@
     el.placeHomeNote = $('place-home-note');
     el.placeResNote = $('place-residence-note');
 
-    function moveCategory(id, dir) {
-      var cats = CL.catalog.CATEGORIES;
-      var i = cats.findIndex(function (c) { return c.id === id; });
-      if (i < 0) return;
-      var j = dir === 'up' ? i - 1 : i + 1;
-      if (j < 0 || j >= cats.length) return;
-      var tmp = cats[i]; cats[i] = cats[j]; cats[j] = tmp;
-      CL.catalog.setCategoryOrder(cats.map(function (c) { return c.id; }));
-      render();
-    }
-
     el.cats.addEventListener('click', function (e) {
-      var arrow = e.target.closest('[data-move]');
-      if (arrow) {
-        e.stopPropagation();
-        var b = e.target.closest('.chip[data-cat]');
-        if (b) moveCategory(b.dataset.cat, arrow.dataset.move);
-        return;
-      }
       var b = e.target.closest('.chip');
-      if (!b || b.id === 'btn-add-cat' || b.id === 'btn-sort-cat') return;
+      if (!b || b.id === 'btn-add-cat') return;
       state.cat = b.dataset.cat;
       state.sub = null;
       state.loc = null;
@@ -242,12 +217,6 @@
       }
     });
 
-    $('btn-sort-cat').addEventListener('click', function (e) {
-      state.sortMode = !state.sortMode;
-      e.currentTarget.classList.toggle('is-on', state.sortMode);
-      render();
-    });
-
     if (el.subs) el.subs.addEventListener('click', function (e) {
       var b = e.target.closest('.sub-chip');
       if (!b) return;
@@ -255,26 +224,153 @@
       render();
     });
 
-    // 底部分类导航栏可拖动横向滚动
-    [el.cats, el.subs].forEach(function (rail) {
+    // 底部分类导航栏：横向滚动 + 长按拖拽排序
+    (function setupBottomNav(rail) {
+      if (!rail) return;
+      var LONG_PRESS = 500;
+      var MOVE_THRESHOLD = 10;
+      var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
+      var sort = { active: false, timer: null, chip: null, id: null, order: [], startX: 0, startY: 0, pointerId: null };
+
+      function decay() {
+        if (Math.abs(scroll.vel) < 0.5) { scroll.raf = null; return; }
+        rail.scrollLeft += scroll.vel;
+        scroll.vel *= 0.92;
+        scroll.raf = requestAnimationFrame(decay);
+      }
+      function clearLongPress() {
+        if (sort.timer) { clearTimeout(sort.timer); sort.timer = null; }
+      }
+      function exitSort() {
+        if (!sort.active) return;
+        sort.active = false;
+        rail.classList.remove('is-sorting');
+        if (sort.chip) sort.chip.classList.remove('is-dragging');
+        sort.chip = null; sort.id = null; sort.order = [];
+      }
+      function commitSort() {
+        if (!sort.active || !sort.order.length) return;
+        var ids = sort.order.map(function (c) { return c.id; });
+        CL.catalog.setCategoryOrder(ids);
+        exitSort();
+        render();
+        CL.ui.toast('分类顺序已保存');
+      }
+      function targetIndexAt(clientX) {
+        var chips = Array.from(rail.querySelectorAll('.chip[data-cat]'));
+        if (!chips.length) return -1;
+        for (var i = 0; i < chips.length; i++) {
+          var rect = chips[i].getBoundingClientRect();
+          if (clientX < rect.left + rect.width / 2) return i;
+        }
+        return chips.length;
+      }
+      function reorder(id, beforeIdx) {
+        var all = [{ id: 'all' }].concat(CL.catalog.CATEGORIES);
+        var from = all.findIndex(function (c) { return c.id === id; });
+        if (from < 0) return;
+        var item = all.splice(from, 1)[0];
+        // 计算在不含 dragged 的数组中的插入位置
+        var idx = beforeIdx;
+        if (from < beforeIdx) idx--;
+        idx = Math.max(1, Math.min(idx, all.length)); // 0 是 "全部"，不允许插入到它前面
+        all.splice(idx, 0, item);
+        sort.order = all.slice(1);
+        // 即时更新 DOM 顺序，避免全量重绘导致滚动位置跳动
+        var chips = Array.from(rail.querySelectorAll('.chip'));
+        var map = {};
+        chips.forEach(function (ch) { map[ch.dataset.cat || 'all'] = ch; });
+        all.forEach(function (c) {
+          if (map[c.id]) rail.appendChild(map[c.id]);
+        });
+      }
+
+      rail.addEventListener('pointerdown', function (e) {
+        var chip = e.target.closest('.chip[data-cat]');
+        if (chip && chip.dataset.cat !== 'all') {
+          sort.startX = e.clientX; sort.startY = e.clientY;
+          sort.id = chip.dataset.cat; sort.chip = chip; sort.pointerId = e.pointerId;
+          clearLongPress();
+          sort.timer = setTimeout(function () {
+            // 进入排序模式
+            sort.active = true;
+            sort.order = CL.catalog.CATEGORIES.slice();
+            rail.classList.add('is-sorting');
+            chip.classList.add('is-dragging');
+            try { rail.setPointerCapture(e.pointerId); } catch (err) {}
+            CL.ui.toast('拖动调整分类顺序', 1200);
+          }, LONG_PRESS);
+        }
+        // 同时启动横向滚动检测
+        scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
+        scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
+        rail.style.cursor = 'grabbing';
+        if (scroll.raf) { cancelAnimationFrame(scroll.raf); scroll.raf = null; }
+      });
+
+      rail.addEventListener('pointermove', function (e) {
+        if (sort.active) {
+          // 拖拽排序中：边滚动边计算插入位置
+          var railRect = rail.getBoundingClientRect();
+          if (e.clientX < railRect.left + 40) rail.scrollLeft -= 6;
+          else if (e.clientX > railRect.right - 40) rail.scrollLeft += 6;
+          var idx = targetIndexAt(e.clientX);
+          reorder(sort.id, idx);
+          return;
+        }
+        if (!scroll.isDown) return;
+        var dx = e.clientX - sort.startX;
+        var dy = e.clientY - sort.startY;
+        if (sort.timer && (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD)) {
+          clearLongPress(); // 手指滑动则取消长按
+        }
+        dx = scroll.startX - e.clientX;
+        rail.scrollLeft = scroll.scrollLeft + dx;
+        var now = Date.now();
+        scroll.vel = (rail.scrollLeft - scroll.lastSL) / (now - scroll.lastT || 1) * 16 || 0;
+        scroll.lastSL = rail.scrollLeft; scroll.lastT = now;
+      });
+
+      rail.addEventListener('pointerup', function (e) {
+        clearLongPress();
+        if (sort.active) {
+          commitSort();
+        } else {
+          scroll.isDown = false;
+          try { rail.releasePointerCapture(e.pointerId); } catch (err) {}
+          rail.style.cursor = '';
+          if (scroll.raf) cancelAnimationFrame(scroll.raf);
+          scroll.raf = requestAnimationFrame(decay);
+        }
+      });
+      rail.addEventListener('pointercancel', function (e) {
+        clearLongPress();
+        if (sort.active) exitSort();
+        scroll.isDown = false; rail.style.cursor = '';
+      });
+      rail.addEventListener('pointerleave', function () {
+        if (!sort.active) { scroll.isDown = false; rail.style.cursor = ''; }
+      });
+    })(el.cats);
+
+    // 子分类 rail：仅横向滚动
+    (function setupSubNav(rail) {
       if (!rail) return;
       var isDown = false, startX, scrollLeft, vel = 0, raf = null, lastT, lastSL;
       function decay() {
         if (Math.abs(vel) < 0.5) { raf = null; return; }
-        rail.scrollLeft += vel;
-        vel *= 0.92;
+        rail.scrollLeft += vel; vel *= 0.92;
         raf = requestAnimationFrame(decay);
       }
       rail.addEventListener('pointerdown', function (e) {
         isDown = true; startX = e.clientX; scrollLeft = rail.scrollLeft; vel = 0; lastT = Date.now(); lastSL = scrollLeft;
-        rail.setPointerCapture(e.pointerId);
+        try { rail.setPointerCapture(e.pointerId); } catch (err) {}
         rail.style.cursor = 'grabbing';
         if (raf) { cancelAnimationFrame(raf); raf = null; }
       });
       rail.addEventListener('pointermove', function (e) {
         if (!isDown) return;
-        var dx = startX - e.clientX;
-        rail.scrollLeft = scrollLeft + dx;
+        rail.scrollLeft = scrollLeft + (startX - e.clientX);
         var now = Date.now();
         vel = (rail.scrollLeft - lastSL) / (now - lastT || 1) * 16 || 0;
         lastSL = rail.scrollLeft; lastT = now;
@@ -286,11 +382,9 @@
         if (raf) cancelAnimationFrame(raf);
         raf = requestAnimationFrame(decay);
       });
-      rail.addEventListener('pointercancel', function (e) {
-        isDown = false; rail.style.cursor = '';
-      });
+      rail.addEventListener('pointercancel', function () { isDown = false; rail.style.cursor = ''; });
       rail.addEventListener('pointerleave', function () { isDown = false; rail.style.cursor = ''; });
-    });
+    })(el.subs);
 
     $('search-input').addEventListener('input', function (e) {
       state.q = e.target.value; render();
