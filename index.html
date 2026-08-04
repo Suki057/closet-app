@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=48">
+<link rel="stylesheet" href="css/style.css?v=49">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -33,6 +33,7 @@
     <button class="tab" data-view="wardrobe">衣橱</button>
     <button class="tab" data-view="studio">搭配间</button>
     <button class="tab" data-view="looks">搭配集</button>
+    <button class="tab" data-view="beauty">彩妆护肤</button>
     <button class="tab" data-view="trash">回收站</button>
   </nav>
 
@@ -55,7 +56,7 @@
 
       <!-- Hero -->
       <div class="home-hero">
-        <img class="home-poster" src="assets/princess_poster.png" alt="想要成为公主，先要相信自己就是公主">
+        <img class="home-poster" src="assets/princess_poster.jpg" alt="想要成为公主，先要相信自己就是公主">
       </div>
 
       <!-- 最近导入 -->
@@ -224,6 +225,38 @@
         <h3>还没有保存的搭配</h3>
       <p>去搭配间挑一套，点「保存搭配」就会出现在这里。</p>
       <button class="btn btn-primary" data-goto="studio">去搭配</button>
+    </div>
+  </section>
+
+  <!-- ============ 彩妆护肤 ============ -->
+  <section class="view" id="view-beauty">
+    <div class="beauty-view">
+      <div class="beauty-head">
+        <h2>彩妆护肤</h2>
+        <label class="search">
+          <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input type="text" id="beauty-search" placeholder="搜索名称、分类、标签">
+        </label>
+      </div>
+      <div class="beauty-body">
+        <div class="grid" id="beauty-grid"></div>
+        <div class="empty" id="beauty-empty" hidden>
+          <div class="empty-art">
+            <svg class="art" viewBox="0 0 120 120">
+              <circle cx="60" cy="42" r="14" style="fill:rgba(255,134,198,.22)"/>
+              <path d="M46 56 Q60 48 74 56 L70 96 H50 Z" style="fill:rgba(143,163,137,.20)" stroke-width="2.6" stroke-linejoin="round"/>
+              <path d="M60 28 V18 M44 34 L36 28 M76 34 L84 28" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>还没有化妆品/护肤品</h3>
+          <p>点击右上角「添加单品」，导入口红、精华、面霜等。</p>
+          <button class="btn btn-primary" data-action="add">添加单品</button>
+        </div>
+      </div>
+      <nav class="cat-bottom-bar" aria-label="彩妆护肤分类">
+        <div class="cat-rail" id="beauty-cats"></div>
+        <div class="sub-rail" id="beauty-subs" hidden></div>
+      </nav>
     </div>
   </section>
 
@@ -436,6 +469,20 @@
 </div>
 
 <!-- ============ 单品长按菜单 ============ -->
+<div class="modal" id="beauty-menu-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-card-menu">
+    <header class="modal-head">
+      <h3>单品操作</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="modal-body card-menu-body">
+      <button class="card-menu-btn" data-act="edit">编辑</button>
+      <button class="card-menu-btn danger" data-act="trash">删除</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="card-menu-modal" hidden>
   <div class="modal-mask" data-close></div>
   <div class="modal-card modal-card-menu">
@@ -493,15 +540,16 @@
 
 <script src="js/db.js?v=6"></script>
 <script src="js/color.js"></script>
-<script src="js/catalog.js?v=5"></script>
+<script src="js/catalog.js?v=6"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=12"></script>
-<script src="js/wardrobe.js?v=20"></script>
-<script src="js/studio.js?v=3"></script>
+<script src="js/wardrobe.js?v=21"></script>
+<script src="js/studio.js?v=4"></script>
 <script src="js/looks.js?v=2"></script>
+<script src="js/beauty.js?v=1"></script>
 <script src="js/home.js?v=4"></script>
 <script src="js/trash.js?v=4"></script>
-<script src="js/app.js?v=13"></script>
+<script src="js/app.js?v=14"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

@@ -24,12 +24,14 @@
     // 在 wardrobe.js 内部自己计数，避免旧版 store.js 缓存中的 countBy() 不过滤 deletedAt
     var counts = { all: 0 };
     CL.store.items().forEach(function (i) {
+      if (String(i.category).indexOf('beauty-') === 0) return; // 彩妆护肤在独立视图管理
       counts.all++;
       counts[i.category] = (counts[i.category] || 0) + 1;
     });
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
     CL.catalog.CATEGORIES.forEach(function (c) {
+      if (String(c.id).indexOf('beauty-') === 0) return;
       var delBadge = state.manageMode ? '<span class="cat-del" data-act="del-cat" title="删除分类">×</span>' : '';
       html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '点击 × 删除分类' : '双击修改名称，长按拖拽排序') + '">' +
         delBadge + icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';

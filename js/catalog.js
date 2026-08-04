@@ -86,6 +86,30 @@
         { id: 'acc-bracelet', name: '手镯' },
         { id: 'acc-ring', name: '戒指' },
         { id: 'acc-watch', name: '手表' }
+      ] },
+    /* 彩妆护肤：独立分组，不在衣橱/搭配间显示 */
+    { id: 'beauty-makeup', name: '彩妆', icon: P.custom, slot: 'acc', z: 60, anchor: { x: 50, y: 11, w: 16 }, multi: true,
+      subs: [
+        { id: 'beauty-makeup-lip', name: '口红' },
+        { id: 'beauty-makeup-foundation', name: '粉底' },
+        { id: 'beauty-makeup-eyeshadow', name: '眼影' },
+        { id: 'beauty-makeup-eyebrow', name: '眉笔' },
+        { id: 'beauty-makeup-blush', name: '腮红' },
+        { id: 'beauty-makeup-highlighter', name: '高光' },
+        { id: 'beauty-makeup-powder', name: '散粉' },
+        { id: 'beauty-makeup-mascara', name: '睫毛膏' },
+        { id: 'beauty-makeup-eyeliner', name: '眼线' }
+      ] },
+    { id: 'beauty-skincare', name: '护肤', icon: P.custom, slot: 'acc', z: 60, anchor: { x: 50, y: 11, w: 16 }, multi: true,
+      subs: [
+        { id: 'beauty-skincare-serum', name: '精华' },
+        { id: 'beauty-skincare-cream', name: '面霜' },
+        { id: 'beauty-skincare-toner', name: '水乳' },
+        { id: 'beauty-skincare-sun', name: '防晒' },
+        { id: 'beauty-skincare-mask', name: '面膜' },
+        { id: 'beauty-skincare-cleanser', name: '洁面' },
+        { id: 'beauty-skincare-eye', name: '眼霜' },
+        { id: 'beauty-skincare-remover', name: '卸妆' }
       ] }
   ];
 

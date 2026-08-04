@@ -77,6 +77,7 @@
       t.classList.toggle('is-active', t.dataset.view === view);
     });
     if (view === 'trash' && CL.trash) CL.trash.render();
+    if (view === 'beauty' && CL.beauty) CL.beauty.render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -290,8 +291,13 @@
         $('cutout-img').src = imp.previewUrl;
         $('cutout-loading').hidden = true;
 
-        var g = CL.catalog.guess(res.feat);
-        if (!imp.catPicked) imp.cat = g.category;
+        var activeView = document.querySelector('.tab.is-active') && document.querySelector('.tab.is-active').dataset.view;
+        if (activeView === 'beauty') {
+          if (!imp.catPicked) imp.cat = 'beauty-makeup';
+        } else {
+          var g = CL.catalog.guess(res.feat);
+          if (!imp.catPicked) imp.cat = g.category;
+        }
         $('auto-tag').textContent = imp.catPicked ? '' :
           '自动识别 · ' + (g.confidence > 0.66 ? '较有把握' : '不太确定，请确认');
         CL.wardrobe.renderCatPicker($('cat-picker'), imp.cat, function (c) {
@@ -484,6 +490,7 @@
       CL.wardrobe.init();
       CL.studio.init();
       CL.looks.init();
+      CL.beauty.init();
       CL.home.init();
       CL.trash.init();
       applySettings();

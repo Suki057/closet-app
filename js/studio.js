@@ -142,6 +142,7 @@
   function renderPickerCats() {
     var counts = CL.store.countBy();
     var html = CL.catalog.CATEGORIES.map(function (c) {
+      if (String(c.id).indexOf('beauty-') === 0) return ''; // 彩妆护肤不参与穿搭
       var n = counts[c.id] || 0;
       return '<button class="studio-cat-card" data-cat="' + c.id + '"' + (n ? '' : ' disabled') + '>' +
         icon(c.icon) +
