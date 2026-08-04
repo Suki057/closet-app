@@ -176,6 +176,12 @@
     var moveBtn = $('card-menu-move');
     if (moveBtn) moveBtn.textContent = it.location === 'home' ? '移到现居地' : '移到家里';
     CL.ui.openModal('card-menu-modal');
+    // 焦点移到弹窗容器而非按钮，避免手机端默认聚焦第一项而被误读为「已选中」
+    var card = $('card-menu-modal').querySelector('.modal-card');
+    if (card) {
+      card.setAttribute('tabindex', '-1');
+      requestAnimationFrame(function () { try { card.focus(); } catch (e) {} });
+    }
   }
 
   /* ---------- 地点板块：家里 / 现居地 ---------- */
