@@ -537,10 +537,9 @@
           CL.ui.toast('已移到' + (to === 'home' ? '家里' : '现居地'));
         });
       } else if (act === 'trash') {
-        if (!confirm('确定把这件单品移入回收站吗？\n7 天内可在「回收站」恢复。')) return;
         CL.studio.takeOffItem(id);
         CL.store.deleteItem(id).then(function () {
-          CL.ui.toast('已移入回收站');
+          CL.ui.toast('已移入回收站（可在回收站恢复）');
         });
       }
     });
@@ -563,11 +562,10 @@
     $('btn-delete-item').addEventListener('click', function () {
       var id = state.editing;
       if (!id) return;
-      if (!confirm('确定把这件单品移入回收站吗？\n7 天内可在「回收站」恢复。')) return;
       CL.studio.takeOffItem(id);
       CL.store.deleteItem(id).then(function () {
         CL.ui.closeModal('item-modal');
-        CL.ui.toast('已移入回收站');
+        CL.ui.toast('已移入回收站（可在回收站恢复）');
       });
     });
 
