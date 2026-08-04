@@ -13,15 +13,20 @@
   }
 
   function hydrate(it) {
+    // 旧数据：以 Blob 存储，用对象 URL 渲染
     if (it.blob && !it.url) it.url = URL.createObjectURL(it.blob);
     if (it.thumbBlob && !it.thumbUrl) it.thumbUrl = URL.createObjectURL(it.thumbBlob);
+    if (!it.thumbUrl && it.url) it.thumbUrl = it.url;
+    // 新数据：以 dataURL 字符串存储，跨会话/跨浏览器 100% 稳定
+    if (it.imgFull && !it.url) it.url = it.imgFull;
+    if (it.img && !it.thumbUrl) it.thumbUrl = it.img;
     if (!it.thumbUrl) it.thumbUrl = it.url;
     return it;
   }
 
   function release(it) {
-    if (it.url) { URL.revokeObjectURL(it.url); it.url = null; }
-    if (it.thumbUrl && it.thumbUrl !== it.url) { URL.revokeObjectURL(it.thumbUrl); it.thumbUrl = null; }
+    if (it.url && it.url.indexOf('blob:') === 0) { URL.revokeObjectURL(it.url); it.url = null; }
+    if (it.thumbUrl && it.thumbUrl.indexOf('blob:') === 0) { URL.revokeObjectURL(it.thumbUrl); it.thumbUrl = null; }
   }
 
   function persistable(it) {
@@ -101,8 +106,8 @@
         category: data.category || 'top',
         sub: data.sub || null,
         location: data.location || null,
-        blob: data.blob,
-        thumbBlob: data.thumbBlob,
+        img: data.img || null,          // dataURL 字符串（主图）
+        imgFull: data.imgFull || data.img || null, // dataURL 字符串（大图）
         width: data.width, height: data.height,
         color: data.color || '#C9C2B8',
         colors: data.colors || [],

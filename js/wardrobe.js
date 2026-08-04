@@ -90,8 +90,8 @@
       return;
     }
     el.grid.innerHTML = list.map(function (i) {
-      return '<article class="card card-pure' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
-        '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy">' +
+      return       '<article class="card card-pure' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
+        '<div class="card-shot" data-name="' + esc(i.name) + '"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" decoding="async" onerror="this.closest(\'.card-shot\').classList.add(\'no-img\')">' +
           (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
         '</div>' +
       '</article>';
@@ -104,7 +104,10 @@
     var it = CL.store.getItem(id);
     if (!it) return;
     state.editing = id;
-    $('detail-img').src = it.url;
+    var dimg = $('detail-img');
+    dimg.classList.remove('no-img');
+    dimg.onerror = function () { dimg.classList.add('no-img'); };
+    dimg.src = it.url;
     $('detail-name').value = it.name;
     $('detail-tags').value = (it.tags || []).join(', ');
     state.editingCat = it.category;

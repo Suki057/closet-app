@@ -5,6 +5,17 @@
   var CL = global.CL;
   function $(id) { return document.getElementById(id); }
 
+  /* 把 Blob 转成 dataURL 字符串，存入 IndexedDB 比直接存 Blob 更稳（iOS/微信不会丢图） */
+  function blobToDataURL(blob) {
+    return new Promise(function (resolve, reject) {
+      if (!blob) return resolve(null);
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+
   /* ---------------- 通用 UI ---------------- */
 
   var toastTimer = null;
@@ -314,22 +325,31 @@
     if (!imp.result) return;
     ui.closeModal('loc-modal');
     var tags = $('item-tags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
-    CL.store.addItem({
-      name: $('item-name').value.trim() || autoName(),
-      category: imp.cat,
-      location: loc,
-      blob: imp.result.blob,
-      thumbBlob: imp.result.thumbBlob,
-      width: imp.result.width,
-      height: imp.result.height,
-      color: imp.result.colors[0] ? imp.result.colors[0].hex : '#C9C2B8',
-      colors: imp.result.colors.map(function (c) { return c.hex; }),
-      tags: tags
-    }).then(function () {
-      imp.idx++;
-      refreshStat();
-      loadCurrent();
-    });
+    var res = imp.result;
+    Promise.all([blobToDataURL(res.blob), blobToDataURL(res.thumbBlob || res.blob)])
+      .then(function (urls) {
+        return CL.store.addItem({
+          name: $('item-name').value.trim() || autoName(),
+          category: imp.cat,
+          location: loc,
+          img: urls[0] || urls[1],          // dataURL 字符串（主图，稳定存储）
+          imgFull: urls[0] || urls[1],      // dataURL 字符串（大图）
+          width: res.width,
+          height: res.height,
+          color: res.colors[0] ? res.colors[0].hex : '#C9C2B8',
+          colors: res.colors.map(function (c) { return c.hex; }),
+          tags: tags
+        });
+      })
+      .then(function () {
+        imp.idx++;
+        refreshStat();
+        loadCurrent();
+      })
+      .catch(function (e) {
+        console.error(e);
+        ui.toast('保存失败：' + (e && e.message ? e.message : '图片处理异常'));
+      });
   }
 
   /* ---------------- 初始化 ---------------- */

@@ -33,7 +33,7 @@
       var d = daysLeft(i);
       var leftTxt = d > 0 ? ('剩余 ' + d + ' 天') : '即将永久清除';
       return '<article class="card trash-card" data-id="' + i.id + '">' +
-        '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></div>' +
+        '<div class="card-shot" data-name="' + esc(i.name) + '"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" decoding="async" onerror="this.closest(\'.card-shot\').classList.add(\'no-img\')"></div>' +
         '<div class="trash-body">' +
           '<span class="trash-left">' + leftTxt + '</span>' +
           '<div class="trash-actions">' +
