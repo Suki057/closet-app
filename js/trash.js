@@ -34,15 +34,12 @@
       var leftTxt = d > 0 ? ('剩余 ' + d + ' 天') : '即将永久清除';
       return '<article class="card trash-card" data-id="' + i.id + '">' +
         '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy"></div>' +
-        '<div class="card-info">' +
-          '<span class="card-name">' + esc(i.name) + '</span>' +
-          '<span class="card-cat">' + esc(CL.catalog.name(i.category)) +
-            (i.sub ? ' · ' + esc(CL.catalog.subName(i.category, i.sub)) : '') + '</span>' +
+        '<div class="trash-body">' +
           '<span class="trash-left">' + leftTxt + '</span>' +
-        '</div>' +
-        '<div class="card-actions trash-actions">' +
-          '<button class="mini-btn text restore" data-act="restore">恢复</button>' +
-          '<button class="mini-btn text danger" data-act="purge">永久删除</button>' +
+          '<div class="trash-actions">' +
+            '<button class="mini-btn text restore" data-act="restore">恢复</button>' +
+            '<button class="mini-btn text danger" data-act="purge">永久删除</button>' +
+          '</div>' +
         '</div>' +
       '</article>';
     }).join('');
