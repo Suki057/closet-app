@@ -86,6 +86,7 @@
     countBySub: function (cat) {
       var m = {};
       items.forEach(function (i) {
+        if (i.deletedAt) return;
         if (cat && i.category !== cat) return;
         var k = i.sub || '__none';
         m[k] = (m[k] || 0) + 1;
@@ -127,7 +128,10 @@
       if (!it) return Promise.resolve();
       it.deletedAt = Date.now();
       emit('items'); emit('trash');
-      return db.put('items', persistable(it)).then(function () { return it; });
+      return db.put('items', persistable(it)).then(function () {
+        emit('items'); emit('trash');
+        return it;
+      });
     },
 
     restoreItem: function (id) {
@@ -135,7 +139,10 @@
       if (!it) return Promise.resolve();
       it.deletedAt = null;
       emit('items'); emit('trash');
-      return db.put('items', persistable(it)).then(function () { return it; });
+      return db.put('items', persistable(it)).then(function () {
+        emit('items'); emit('trash');
+        return it;
+      });
     },
 
     purgeItem: function (id) {
@@ -144,7 +151,9 @@
       release(items[idx]);
       items.splice(idx, 1);
       emit('items'); emit('trash');
-      return db.remove('items', id);
+      return db.remove('items', id).then(function () {
+        emit('items'); emit('trash');
+      });
     },
 
     purgeExpired: function () {
