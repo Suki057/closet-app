@@ -59,13 +59,11 @@
       if (act.dataset.act === 'restore') {
         CL.store.restoreItem(id).then(function () { CL.ui.toast('已恢复到衣橱'); });
       } else if (act.dataset.act === 'purge') {
-        if (!confirm('永久删除后将无法恢复，确定吗？')) return;
         CL.store.purgeItem(id).then(function () { CL.ui.toast('已永久删除'); });
       }
     });
 
     if (el.clearBtn) el.clearBtn.addEventListener('click', function () {
-      if (!confirm('将永久删除回收站里的全部单品，且无法恢复。确定吗？')) return;
       var list = CL.store.trashedItems();
       Promise.all(list.map(function (i) { return CL.store.purgeItem(i.id); })).then(function () {
         CL.ui.toast('回收站已清空');
