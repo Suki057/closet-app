@@ -486,8 +486,11 @@
     el.grid.addEventListener('pointerdown', function (e) {
       var shot = e.target.closest('.card-shot');
       var card = e.target.closest('.card');
-      if (shot && card) startLongPress(e, card.dataset.id);
-      else clearLongPress();
+      if (shot && card) {
+        // 阻止 iOS 默认的长按文本选择/图片保存/链接菜单
+        try { e.preventDefault(); } catch (err) {}
+        startLongPress(e, card.dataset.id);
+      } else clearLongPress();
     });
     el.grid.addEventListener('pointermove', function (e) {
       if (!longPress.timer) return;

@@ -573,13 +573,13 @@ button{cursor:pointer;border:none;background:none}
 .foot-right{display:flex;gap:8px}
 
 /* 单品长按操作菜单 */
-.modal-card-menu{max-width:260px;border-radius:18px;align-self:center;justify-self:center;margin:auto}
-.card-menu-body{padding:10px 16px 18px;display:flex;flex-direction:column;gap:2px}
+.modal-card-menu{max-width:260px;border-radius:18px;align-self:center;justify-self:center;margin:auto;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.card-menu-body{padding:10px 16px 18px;display:flex;flex-direction:column;gap:2px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .card-menu-btn{
   display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   padding:15px 12px;border-radius:12px;background:transparent;border:1px solid transparent;
   color:var(--ink);font-size:15px;font-weight:500;letter-spacing:.02em;
-  transition:background .15s,border-color .15s;
+  transition:background .15s,border-color .15s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 }
 .card-menu-btn:hover{background:rgba(143,163,137,.10);border-color:rgba(143,163,137,.25)}
 .card-menu-btn.danger{color:#C65B50}
@@ -740,14 +740,16 @@ button{cursor:pointer;border:none;background:none}
 /* ---------------- home ---------------- */
 .home{max-width:1180px;margin:0 auto;padding:34px 24px 68px;animation:fade .24s ease}
 .home-hero{
-  display:grid;grid-template-columns:1fr;align-items:center;
-  background:linear-gradient(160deg, rgba(255,255,255,.72), rgba(244,245,240,.72));
+  display:block;
+  background:transparent;
   border:1px solid var(--line);border-radius:20px;
-  padding:66px 44px;min-height:248px;box-shadow:var(--shadow-1);overflow:hidden;position:relative;
+  padding:0;overflow:hidden;position:relative;
+  box-shadow:var(--shadow-1);
 }
-.home-hero::before{
-  content:"";position:absolute;left:0;top:24px;bottom:24px;width:3px;border-radius:3px;
-  background:linear-gradient(180deg,var(--accent),var(--accent-2),rgba(143,163,137,0));
+.home-hero::before{display:none}
+.home-poster{
+  display:block;width:100%;height:auto;
+  max-height:460px;object-fit:cover;object-position:center top;
 }
 .hero-eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent-ink);font-weight:600;margin-bottom:14px;padding-left:22px}
 .hero-title{font-size:40px;line-height:1.16;font-weight:600;letter-spacing:-.01em;padding-left:20px;
@@ -806,7 +808,8 @@ button{cursor:pointer;border:none;background:none}
 
 @media (max-width:760px){
   .home{padding:20px 14px 54px}
-  .home-hero{padding:44px 24px}
+  .home-hero{padding:0;border-radius:16px}
+  .home-poster{max-height:420px}
   .hero-title{font-size:30px}
   .hero-title.affirm{font-size:16px;line-height:1.75}
   .wardrobe-stats{padding:14px 14px 2px;gap:8px}
