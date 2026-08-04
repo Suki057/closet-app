@@ -232,13 +232,11 @@
         var id = b && b.dataset.cat;
         if (!id || id === 'all') return;
         if (state.cat === id) state.cat = 'all';
-        // 将该分类下的单品移到默认分类 top
-        var moved = 0;
-        CL.store.items().forEach(function (it) {
-          if (it.category === id) { CL.store.updateItem(it.id, { category: 'top', sub: null }); moved++; }
-        });
+        // 将该分类下的单品批量移到默认分类 top（仅一次重渲染 + 单事务写入）
+        var ids = CL.store.items().filter(function (it) { return it.category === id; }).map(function (it) { return it.id; });
+        CL.store.bulkPatch(ids, { category: 'top', sub: null });
         CL.catalog.deleteCategory(id);
-        CL.ui.toast('已删除分类' + (moved ? '，' + moved + ' 件单品已归入上衣' : ''));
+        CL.ui.toast('已删除分类' + (ids.length ? '，' + ids.length + ' 件单品已归入上衣' : ''));
         render();
         return;
       }
@@ -290,12 +288,10 @@
         var subId = b && b.dataset.sub;
         if (!subId || !state.cat || state.cat === 'all') return;
         if (state.sub === subId) state.sub = null;
-        var moved = 0;
-        CL.store.items().forEach(function (it) {
-          if (it.category === state.cat && it.sub === subId) { CL.store.updateItem(it.id, { sub: null }); moved++; }
-        });
+        var ids = CL.store.items().filter(function (it) { return it.category === state.cat && it.sub === subId; }).map(function (it) { return it.id; });
+        CL.store.bulkPatch(ids, { sub: null });
         CL.catalog.deleteSubCategory(state.cat, subId);
-        CL.ui.toast('已删除子分类' + (moved ? '，' + moved + ' 件单品已归入「全部' + CL.catalog.name(state.cat) + '」' : ''));
+        CL.ui.toast('已删除子分类' + (ids.length ? '，' + ids.length + ' 件单品已归入「全部' + CL.catalog.name(state.cat) + '」' : ''));
         render();
         return;
       }

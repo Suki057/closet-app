@@ -71,6 +71,25 @@
       });
     },
 
+    /* 批量写入：同一事务内 put 多个对象，远快于多次独立 put（手机端尤其明显） */
+    bulkPut: function (store, values) {
+      if (!values || !values.length) return Promise.resolve(0);
+      return openDB().then(function (db) {
+        if (!db) {
+          values.forEach(function (v) { mem[store].set(v.id, v); });
+          return values.length;
+        }
+        return new Promise(function (resolve, reject) {
+          var t = db.transaction(store, 'readwrite');
+          var os = t.objectStore(store);
+          t.oncomplete = function () { resolve(values.length); };
+          t.onerror = function () { reject(t.error); };
+          t.onabort = function () { reject(t.error); };
+          values.forEach(function (v) { os.put(v); });
+        });
+      });
+    },
+
     get: function (store, id) {
       return tx(store, 'readonly').then(function (os) {
         if (!os) return mem[store].get(id) || null;

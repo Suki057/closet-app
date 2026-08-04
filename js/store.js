@@ -128,6 +128,21 @@
       return db.put('items', persistable(it)).then(function () { return it; });
     },
 
+    /* 批量改多个单品：内存改 + 仅 emit 一次（仅重渲染一次）+ 单事务批量写入。
+       用于"删除分类时把该分类下所有单品改归其他分类"等场景，避免 N 件触发 N 次全页重渲染。 */
+    bulkPatch: function (ids, patch) {
+      if (!ids || !ids.length) return Promise.resolve(0);
+      var changed = [];
+      ids.forEach(function (id) {
+        var it = store.getItem(id);
+        if (!it) return;
+        Object.keys(patch).forEach(function (k) { it[k] = patch[k]; });
+        changed.push(persistable(it));
+      });
+      if (changed.length) emit('items');
+      return db.bulkPut('items', changed);
+    },
+
     deleteItem: function (id) {
       var it = items.find(function (i) { return i.id === id; });
       if (!it) return Promise.resolve();
