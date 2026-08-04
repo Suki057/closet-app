@@ -566,6 +566,28 @@ button{cursor:pointer;border:none;background:none}
 .modal-foot.spread{justify-content:space-between}
 .foot-right{display:flex;gap:8px}
 
+/* 单品长按操作菜单 */
+.modal-card-menu{max-width:340px;border-radius:18px}
+.card-menu-body{padding:10px 16px 18px;display:flex;flex-direction:column;gap:2px}
+.card-menu-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:15px 12px;border-radius:12px;background:transparent;border:1px solid transparent;
+  color:var(--ink);font-size:15px;font-weight:500;letter-spacing:.02em;
+  transition:background .15s,border-color .15s;
+}
+.card-menu-btn:hover{background:rgba(143,163,137,.10);border-color:rgba(143,163,137,.25)}
+.card-menu-btn.danger{color:#C65B50}
+.card-menu-btn.danger:hover{background:rgba(198,91,80,.08);border-color:rgba(198,91,80,.22)}
+
+/* 衣橱卡片禁止长按触发系统菜单/选择 */
+#wardrobe-grid .card,
+#wardrobe-grid .card-shot{
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;
+  touch-action:manipulation;
+}
+#wardrobe-grid .card-shot img{pointer-events:none}
+
 .import-body{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:20px;overflow:auto;flex:1 1 auto;min-height:0}
 .cutout-box{
   position:relative;aspect-ratio:1/1;border-radius:14px;overflow:hidden;

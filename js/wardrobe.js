@@ -3,7 +3,8 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false, railDragged: false };
+  var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false, railDragged: false, menuItemId: null, suppressClick: false };
+  var longPress = { timer: null, id: null, startX: 0, startY: 0, triggered: false };
 
   var el = {};
 
@@ -140,6 +141,31 @@
     state.cat = cat || 'all';
     state.sub = sub || null;
     render();
+  }
+
+  /* ---------- 长按菜单 ---------- */
+  function startLongPress(e, id) {
+    clearLongPress();
+    longPress.id = id;
+    longPress.startX = e.clientX;
+    longPress.startY = e.clientY;
+    longPress.triggered = false;
+    longPress.timer = setTimeout(function () {
+      longPress.triggered = true;
+      openCardMenu(id);
+    }, 450);
+  }
+  function clearLongPress() {
+    if (longPress.timer) { clearTimeout(longPress.timer); longPress.timer = null; }
+    longPress.id = null;
+  }
+  function openCardMenu(id) {
+    var it = CL.store.getItem(id);
+    if (!it) return;
+    state.menuItemId = id;
+    var moveBtn = $('card-menu-move');
+    if (moveBtn) moveBtn.textContent = it.location === 'home' ? '移到现居地' : '移到家里';
+    CL.ui.openModal('card-menu-modal');
   }
 
   /* ---------- 地点板块：家里 / 现居地 ---------- */
@@ -441,7 +467,34 @@
       render();
     });
 
+    /* 长按图片弹出操作菜单 */
+    el.grid.addEventListener('pointerdown', function (e) {
+      var shot = e.target.closest('.card-shot');
+      var card = e.target.closest('.card');
+      if (shot && card) startLongPress(e, card.dataset.id);
+      else clearLongPress();
+    });
+    el.grid.addEventListener('pointermove', function (e) {
+      if (!longPress.timer) return;
+      var dx = e.clientX - longPress.startX;
+      var dy = e.clientY - longPress.startY;
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) clearLongPress();
+    });
+    el.grid.addEventListener('pointerup', function () {
+      var triggered = longPress.triggered;
+      clearLongPress();
+      if (triggered) {
+        state.suppressClick = true;
+        setTimeout(function () { state.suppressClick = false; }, 60);
+      }
+    });
+    el.grid.addEventListener('pointercancel', clearLongPress);
+    el.grid.addEventListener('contextmenu', function (e) {
+      if (e.target.closest('.card-shot')) e.preventDefault();
+    });
+
     el.grid.addEventListener('click', function (e) {
+      if (state.suppressClick) { e.stopPropagation(); return; }
       var card = e.target.closest('.card');
       if (!card) return;
       var id = card.dataset.id;
@@ -463,6 +516,33 @@
         return;
       }
       openDetail(id);
+    });
+
+    /* 长按菜单按钮 */
+    $('card-menu-modal').addEventListener('click', function (e) {
+      var btn = e.target.closest('.card-menu-btn');
+      if (!btn) return;
+      var id = state.menuItemId;
+      if (!id) return;
+      var it = CL.store.getItem(id);
+      var act = btn.dataset.act;
+      CL.ui.closeModal('card-menu-modal');
+      if (act === 'wear') {
+        CL.studio.wear(id);
+        CL.app.go('studio');
+        CL.ui.toast('已加入搭配间');
+      } else if (act === 'move') {
+        var to = (it && it.location === 'home') ? 'residence' : 'home';
+        CL.store.updateItem(id, { location: to }).then(function () {
+          CL.ui.toast('已移到' + (to === 'home' ? '家里' : '现居地'));
+        });
+      } else if (act === 'trash') {
+        if (!confirm('确定把这件单品移入回收站吗？\n7 天内可在「回收站」恢复。')) return;
+        CL.studio.takeOffItem(id);
+        CL.store.deleteItem(id).then(function () {
+          CL.ui.toast('已移入回收站');
+        });
+      }
     });
 
     $('btn-update-item').addEventListener('click', function () {

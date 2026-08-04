@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=42">
+<link rel="stylesheet" href="css/style.css?v=43">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -465,6 +465,22 @@
   </div>
 </div>
 
+<!-- ============ 单品长按菜单 ============ -->
+<div class="modal" id="card-menu-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card modal-card-menu">
+    <header class="modal-head">
+      <h3>单品操作</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="modal-body card-menu-body">
+      <button class="card-menu-btn" data-act="wear">加入搭配间</button>
+      <button class="card-menu-btn" data-act="move" id="card-menu-move">移到现居地</button>
+      <button class="card-menu-btn danger" data-act="trash">删除</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 设置 ============ -->
 <div class="modal" id="settings-modal" hidden>
   <div class="modal-mask" data-close></div>
@@ -510,7 +526,7 @@
 <script src="js/catalog.js?v=5"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=8"></script>
-<script src="js/wardrobe.js?v=13"></script>
+<script src="js/wardrobe.js?v=14"></script>
 <script src="js/studio.js?v=3"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/home.js?v=4"></script>
