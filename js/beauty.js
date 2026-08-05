@@ -3,7 +3,7 @@
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', menuItemId: null, suppressClick: false };
+  var state = { cat: 'all', sub: null, q: '', loc: null, menuItemId: null, suppressClick: false };
   var el = {};
   var longPress = { timer: null, id: null, startX: 0, startY: 0, triggered: false };
 
@@ -69,6 +69,7 @@
         if (i.category !== state.cat) return false;
         if (state.sub && i.sub !== state.sub) return false;
       }
+      if (state.loc && i.location !== state.loc) return false;
       return true;
     });
     var q = state.q.trim().toLowerCase();
@@ -83,13 +84,35 @@
 
   function cardHtml(i) {
     return '<article class="card card-pure" data-id="' + i.id + '">' +
-      '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" onerror="this.parentElement.classList.add(\'no-img\')"></div>' +
+      '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" onerror="this.parentElement.classList.add(\'no-img\')">' +
+        (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
+      '</div>' +
       '<div class="card-name">' + esc(i.name) + '</div>' +
     '</article>';
   }
 
+  function renderPlaces() {
+    if (!el.placeHome) return;
+    var counts = { home: 0, residence: 0 };
+    CL.store.items().forEach(function (i) {
+      if (String(i.category).indexOf('beauty-') !== 0) return;
+      if (i.location === 'home') counts.home++;
+      else if (i.location === 'residence') counts.residence++;
+    });
+    el.placeHomeNote.textContent = counts.home ? (counts.home + ' 件单品') : '尚未填写';
+    el.placeResNote.textContent = counts.residence ? (counts.residence + ' 件单品') : '尚未填写';
+    el.placeHome.classList.toggle('is-active', state.loc === 'home');
+    el.placeRes.classList.toggle('is-active', state.loc === 'residence');
+  }
+
   function render() {
+    renderPlaces();
     renderCats();
+    if (!state.loc) {
+      el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>请选择地点</h3><p>点击「家里」或「现居地」查看对应库存。</p></div>';
+      el.empty.hidden = true;
+      return;
+    }
     var list = filtered();
     el.grid.innerHTML = list.map(cardHtml).join('');
     el.empty.hidden = list.length > 0;
@@ -125,6 +148,10 @@
     el.subs = $('beauty-subs');
     el.grid = $('beauty-grid');
     el.empty = $('beauty-empty');
+    el.placeHome = $('place-beauty-home');
+    el.placeRes = $('place-beauty-residence');
+    el.placeHomeNote = $('place-beauty-home-note');
+    el.placeResNote = $('place-beauty-residence-note');
 
     el.cats.addEventListener('click', function (e) {
       var b = e.target.closest('.chip');
@@ -138,6 +165,18 @@
       var b = e.target.closest('.sub-chip');
       if (!b) return;
       state.sub = b.dataset.sub || null;
+      render();
+    });
+
+    /* 地点板块：家里 / 现居地 */
+    var placeWrap = el.placeHome && el.placeHome.closest('.wardrobe-places');
+    if (placeWrap) placeWrap.addEventListener('click', function (e) {
+      var box = e.target.closest('.place-box[data-loc]');
+      if (!box) return;
+      var loc = box.dataset.loc;
+      state.loc = state.loc === loc ? null : loc;
+      state.cat = 'all';
+      state.sub = null;
       render();
     });
 
