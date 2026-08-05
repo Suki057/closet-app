@@ -78,15 +78,27 @@
     return list;
   }
 
-  function render() {
+  /* 仅刷新底部栏（分类/子类/地点），不碰图片网格——成本极低，用于分类增删改名排序 */
+  function renderBar() {
     renderCats();
     renderSubs();
     renderPlaces();
-    var list = filtered();
+  }
+
+  var lastGridKey = '';
+  function renderGrid() {
     if (!state.loc) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>请选择地点</h3><p>点击「家里」或「现居地」查看对应库存。</p></div>';
+      lastGridKey = '__needloc';
       return;
     }
+    var list = filtered();
+    // 可见集合签名：若当前筛选下实际显示的单品集合没变，则不重绘图片网格，
+    // 避免大图重新解码导致卡顿（删除/新增分类、改名、排序时尤其明显）
+    var key = state.cat + '|' + state.sub + '|' + state.loc + '|' + state.favOnly + '|' + state.q + '|' + list.length +
+      '#' + list.map(function (i) { return i.id; }).join(',');
+    if (key === lastGridKey) return;
+    lastGridKey = key;
     if (!list.length && CL.store.items().length > 0) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>没有匹配的单品</h3><p>换个类目或关键词试试。</p></div>';
       return;
@@ -98,6 +110,11 @@
         '</div>' +
       '</article>';
     }).join('');
+  }
+
+  function render() {
+    renderBar();
+    renderGrid();
   }
 
   /* ---------- 详情弹窗 ---------- */
@@ -157,6 +174,44 @@
     state.cat = cat || 'all';
     state.sub = sub || null;
     render();
+  }
+
+  /* 内联改名：双击/长按分类标题后，在底部栏直接编辑并确认 */
+  function startRename(chip) {
+    var id = chip.dataset.cat;
+    if (!id || id === 'all') return;
+    var c = CL.catalog.get(id);
+    if (!c || chip.classList.contains('is-editing')) return;
+    chip.classList.add('is-editing');
+    var nameSpan = chip.querySelector('.chip-name');
+    var input = document.createElement('input');
+    input.className = 'chip-edit';
+    input.value = c.name;
+    input.setAttribute('aria-label', '修改分类名称');
+    if (nameSpan) nameSpan.parentNode.replaceChild(input, nameSpan);
+    var ok = document.createElement('span');
+    ok.className = 'chip-ok';
+    ok.dataset.act = 'rename-ok';
+    ok.textContent = '确定';
+    chip.appendChild(ok);
+
+    var finished = false;
+    function commit(save) {
+      if (finished) return;
+      finished = true;
+      var v = input.value.trim();
+      chip.classList.remove('is-editing');
+      if (save && v) CL.catalog.renameCategory(id, v);
+      renderBar(); // 仅刷新底部栏（分类名变化），网格不受影响
+    }
+    input.focus();
+    try { input.select(); } catch (e) {}
+    ok.addEventListener('click', function (e) { e.stopPropagation(); commit(true); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+    });
+    input.addEventListener('blur', function () { commit(true); });
   }
 
   /* ---------- 长按菜单 ---------- */
@@ -228,6 +283,8 @@
     el.cats.addEventListener('click', function (e) {
       // 刚刚是横向拖动滚动，不当作点击（避免拖动时误触 × 删除分类）
       if (state.railDragged) { state.railDragged = false; return; }
+      // 编辑分类名时，点击输入框/确定按钮不触发筛选或删除
+      if (e.target.closest('.chip.is-editing')) return;
       var del = e.target.closest('.cat-del');
       if (del) {
         e.stopPropagation();
@@ -235,12 +292,13 @@
         var id = b && b.dataset.cat;
         if (!id || id === 'all') return;
         if (state.cat === id) state.cat = 'all';
-        // 将该分类下的单品批量移到默认分类 top（仅一次重渲染 + 单事务写入）
+        // 先移除分类定义，再批量改单品归属。bulkPatch 的 emit 会触发「一次」完整渲染，
+        // 而网格因可见集合未变会自动跳过重绘，底部栏同步刷新——避免二次重绘图片网格导致卡顿。
         var ids = CL.store.items().filter(function (it) { return it.category === id; }).map(function (it) { return it.id; });
-        CL.store.bulkPatch(ids, { category: 'top', sub: null });
         CL.catalog.deleteCategory(id);
+        if (ids.length) CL.store.bulkPatch(ids, { category: 'top', sub: null });
+        else renderBar();
         CL.ui.toast('已删除分类' + (ids.length ? '，' + ids.length + ' 件单品已归入上衣' : ''));
-        render();
         return;
       }
       if (state.manageMode) return;
@@ -258,15 +316,11 @@
     }
 
     el.cats.addEventListener('dblclick', function (e) {
-      if (state.manageMode) return;
+      if (e.target.closest('.cat-del')) return;
       var b = e.target.closest('.chip');
       if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
-      var c = CL.catalog.get(b.dataset.cat);
-      var name = window.prompt('修改分类名称：', c.name);
-      if (name && name.trim()) {
-        CL.catalog.renameCategory(c.id, name.trim());
-        render();
-      }
+      if (b.classList.contains('is-editing')) return;
+      startRename(b);
     });
 
     $('btn-manage-cat').addEventListener('click', function (e) {
@@ -279,7 +333,7 @@
       var name = window.prompt('新增一级分类名称（如：外套、上衣）：');
       if (name && name.trim()) {
         CL.catalog.addCategory(name.trim());
-        render();
+        renderBar();
       }
     });
 
@@ -292,10 +346,10 @@
         if (!subId || !state.cat || state.cat === 'all') return;
         if (state.sub === subId) state.sub = null;
         var ids = CL.store.items().filter(function (it) { return it.category === state.cat && it.sub === subId; }).map(function (it) { return it.id; });
-        CL.store.bulkPatch(ids, { sub: null });
         CL.catalog.deleteSubCategory(state.cat, subId);
+        if (ids.length) CL.store.bulkPatch(ids, { sub: null });
+        else renderBar();
         CL.ui.toast('已删除子分类' + (ids.length ? '，' + ids.length + ' 件单品已归入「全部' + CL.catalog.name(state.cat) + '」' : ''));
-        render();
         return;
       }
       if (state.manageMode) return;
@@ -386,6 +440,15 @@
               try { rail.setPointerCapture(e.pointerId); } catch (err) {}
               CL.ui.toast('拖动调整分类顺序', 1200);
             }, LONG_PRESS);
+          }
+        } else {
+          // 管理模式：长按分类标题进入改名（手指滑动则取消，避免与滚动冲突）
+          var mchip = e.target.closest('.chip[data-cat]');
+          if (mchip && mchip.dataset.cat !== 'all' && !e.target.closest('.cat-del') && !mchip.classList.contains('is-editing')) {
+            clearLongPress();
+            sort.timer = setTimeout(function () {
+              startRename(mchip);
+            }, 450);
           }
         }
 

@@ -288,6 +288,25 @@ button{cursor:pointer;border:none;background:none}
 .cat-del:hover{transform:scale(1.12)}
 .cat-bottom-bar.is-sorting .cat-del{display:none}
 
+/* 底部分类内联改名 */
+.cat-bottom-bar .chip.is-editing{
+  background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent);
+  padding-left:12px;padding-right:8px;
+}
+.cat-bottom-bar .chip.is-editing .ico,
+.cat-bottom-bar .chip.is-editing .n,
+.cat-bottom-bar .chip.is-editing .cat-del{display:none}
+.cat-bottom-bar .chip .chip-edit{
+  border:none;outline:none;background:transparent;
+  font-size:14px;font-weight:600;color:var(--ink);
+  width:80px;min-width:48px;padding:0;
+}
+.cat-bottom-bar .chip .chip-ok{
+  margin-left:6px;padding:4px 10px;border-radius:9px;
+  background:linear-gradient(135deg, var(--accent), var(--accent-2));
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;flex:none;
+}
+
 .looks-head-box{
   position:relative;overflow:hidden;max-width:1340px;width:auto;margin:0 auto 26px;padding:18px 24px;
   border-radius:20px;cursor:text;

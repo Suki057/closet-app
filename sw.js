@@ -1,5 +1,5 @@
 /* 衣橱 · Closet — Service Worker：应用壳缓存，支持离线打开与「添加到主屏幕」 */
-var CACHE = 'closet-v42';
+var CACHE = 'closet-v43';
 var PRECACHE = ['./', 'index.html', 'manifest.webmanifest', 'assets/princess_poster.jpg'];
 
 self.addEventListener('install', function (e) {
