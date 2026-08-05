@@ -518,7 +518,7 @@ button{cursor:pointer;border:none;background:none}
 .modal-confirm{max-width:420px}
 .confirm-body{padding:22px 22px 20px;text-align:center}
 .confirm-title{font-size:19px;margin:0 0 10px;color:var(--ink)}
-.confirm-title #cat-del-name{color:var(--accent-ink)}
+.confirm-title #cat-del-name,.confirm-title #beauty-cat-del-name{color:var(--accent-ink)}
 .confirm-text{font-size:14px;color:var(--ink-3);line-height:1.7;margin:0 0 20px}
 .confirm-text b{color:var(--ink);font-weight:700}
 .confirm-actions{display:flex;gap:12px;justify-content:center}

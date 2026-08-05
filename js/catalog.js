@@ -113,7 +113,8 @@
         { id: 'beauty-skincare-cleanser', name: '洁面' },
         { id: 'beauty-skincare-eye', name: '眼霜' },
         { id: 'beauty-skincare-remover', name: '卸妆' }
-      ] }
+      ] },
+    { id: 'beauty-uncategorized', name: '未分类', icon: P.other, slot: 'acc', z: 5, anchor: { x: 50, y: 11, w: 16 }, multi: true, subs: [] }
   ];
 
   var MAP = {};
@@ -189,15 +190,21 @@ if (CUSTOM.order && CUSTOM.order.length) {
     return true;
   }
 
-  function addCategory(name) {
+  function addCategory(name, opts) {
+    opts = opts || {};
     name = String(name || '').trim();
     if (!name) return null;
-    var id = 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    var ref = get('top');
-    var c = {
-      id: id, name: name, icon: P.custom, slot: 'top', z: 30,
-      anchor: { x: ref.anchor.x, y: ref.anchor.y, w: ref.anchor.w }, subs: []
-    };
+    var id = (opts.beauty ? 'beauty-custom_' : 'custom_') + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    var c;
+    if (opts.beauty) {
+      c = { id: id, name: name, icon: P.custom, slot: 'acc', z: 60, anchor: { x: 50, y: 11, w: 16 }, multi: true, subs: [] };
+    } else {
+      var ref = get('top');
+      c = {
+        id: id, name: name, icon: P.custom, slot: 'top', z: 30,
+        anchor: { x: ref.anchor.x, y: ref.anchor.y, w: ref.anchor.w }, subs: []
+      };
+    }
     CATEGORIES.push(c); MAP[id] = c;
     CUSTOM.custom.push(c);
     CUSTOM.order.push(id);

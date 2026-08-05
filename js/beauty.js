@@ -1,11 +1,13 @@
-/* 彩妆护肤视图：独立分类、网格、搜索、长按删除 */
+/* 彩妆护肤视图：独立分类、网格、搜索、长按删除；分类「管理」模式（改名/删除/新增，同衣橱） */
 (function (global) {
   'use strict';
 
   var CL = global.CL;
-  var state = { cat: 'all', sub: null, q: '', loc: null, menuItemId: null, suppressClick: false };
+  var state = { cat: 'all', sub: null, q: '', loc: null, menuItemId: null, suppressClick: false, manageMode: false };
   var el = {};
   var longPress = { timer: null, id: null, startX: 0, startY: 0, triggered: false };
+  var lastTap = { t: 0, cat: null };       // 手动双击检测（首击会重渲染，原生 dblclick 不触发）
+  var pendingDeleteCat = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -39,7 +41,9 @@
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (cnt.all || 0) + '</span></button>';
     beautyCats().forEach(function (c) {
-      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + '" data-cat="' + c.id + '">' +
+      var active = (state.cat === c.id && !state.sub) ? ' is-active' : '';
+      var managing = state.manageMode ? ' is-managing' : '';
+      html += '<button class="chip' + active + managing + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '双击改名，长按删除' : '双击修改名称') + '">' +
         icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (cnt[c.id] || 0) + '</span></button>';
     });
     el.cats.innerHTML = html;
@@ -53,10 +57,11 @@
       el.subs.hidden = true; el.subs.innerHTML = ''; return;
     }
     var cnt = counts();
-    var html = '<button class="sub-chip ' + (!state.sub ? 'is-active' : '') + '" data-sub="">全部' + esc(c.name) + '</button>';
+    var html = '<button class="sub-chip ' + (!state.sub ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-sub="">全部' + esc(c.name) + '</button>';
     subs.forEach(function (s) {
-      html += '<button class="sub-chip ' + (state.sub === s.id ? 'is-active' : '') + '" data-sub="' + s.id + '">' +
-        '<span class="chip-name">' + esc(s.name) + '</span><span class="n">' + (cnt[s.id] || 0) + '</span></button>';
+      var delBadge = state.manageMode ? '<span class="cat-del" data-act="del-sub" title="删除子分类">×</span>' : '';
+      html += '<button class="sub-chip ' + (state.sub === s.id ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-sub="' + s.id + '" title="' + (state.manageMode ? '点击 × 删除子分类' : '') + '">' +
+        delBadge + '<span class="chip-name">' + esc(s.name) + '</span><span class="n">' + (cnt[s.id] || 0) + '</span></button>';
     });
     el.subs.innerHTML = html;
     el.subs.hidden = false;
@@ -118,6 +123,74 @@
     el.empty.hidden = list.length > 0;
   }
 
+  /* 内联改名：双击分类标题后，在底部栏直接编辑并确认 */
+  function startRename(chip) {
+    var id = chip.dataset.cat;
+    if (!id || id === 'all') return;
+    var c = CL.catalog.get(id);
+    if (!c || chip.classList.contains('is-editing')) return;
+    chip.classList.add('is-editing');
+    var nameSpan = chip.querySelector('.chip-name');
+    var input = document.createElement('input');
+    input.className = 'chip-edit';
+    input.value = c.name;
+    input.setAttribute('aria-label', '修改分类名称');
+    if (nameSpan) nameSpan.parentNode.replaceChild(input, nameSpan);
+    var ok = document.createElement('span');
+    ok.className = 'chip-ok';
+    ok.dataset.act = 'rename-ok';
+    ok.textContent = '确定';
+    chip.appendChild(ok);
+
+    var finished = false;
+    function commit(save) {
+      if (finished) return;
+      finished = true;
+      var v = input.value.trim();
+      chip.classList.remove('is-editing');
+      if (save && v) CL.catalog.renameCategory(id, v);
+      renderCats(); // 仅刷新底部栏（分类名变化），网格不受影响
+    }
+    input.focus();
+    try { input.select(); } catch (e) {}
+    ok.addEventListener('click', function (e) { e.stopPropagation(); commit(true); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+    });
+    input.addEventListener('blur', function () { commit(true); });
+  }
+
+  /* 弹出确认框：确认后单品归入「未分类」、分类被移除（单品数据不丢、不复制大图） */
+  function confirmDeleteCategory(id) {
+    if (id === 'uncategorized' || id === 'beauty-uncategorized' || id === 'all') return; // 受保护，不可删除
+    var c = CL.catalog.get(id);
+    pendingDeleteCat = id;
+    var nameEl = $('beauty-cat-del-name');
+    var cntEl = $('beauty-cat-del-count');
+    var n = CL.store.items().filter(function (i) { return i.category === id; }).length;
+    if (nameEl) nameEl.textContent = c ? c.name : '该分类';
+    if (cntEl) cntEl.textContent = String(n);
+    CL.ui.openModal('beauty-cat-del-modal');
+  }
+
+  /* 删除分类（确认后调用）：先把该分类下全部单品归入「未分类」，再移除分类定义 */
+  function deleteCategoryById(id) {
+    if (id === 'uncategorized' || id === 'beauty-uncategorized' || id === 'all') return;
+    if (state.cat === id) { state.cat = 'all'; state.sub = null; }
+    var c = CL.catalog.get(id);
+    var name = (c && c.name) || id;
+    var n = CL.store.items().filter(function (i) { return i.category === id; }).length;
+    CL.store.moveItemsToCategory(id, 'beauty-uncategorized').then(function () {
+      CL.catalog.deleteCategory(id);   // 写入删除标记并持久化（重载后不再复活）
+      render();
+      CL.ui.toast('已删除分类「' + name + '」，' + n + ' 件单品已归入「未分类」');
+    }).catch(function (e) {
+      console.error(e);
+      CL.ui.toast('删除未执行：' + (e && e.message ? e.message : '未知错误') + '，请重试');
+    });
+  }
+
   function startLongPress(e, id) {
     clearLongPress();
     longPress.id = id;
@@ -154,17 +227,50 @@
     el.placeResNote = $('place-beauty-residence-note');
 
     el.cats.addEventListener('click', function (e) {
+      // 刚刚是横向拖动滚动，不当作点击（避免误触）
+      if (state.railDragged) { state.railDragged = false; return; }
+      // 编辑分类名时，点击输入框/确定按钮不触发筛选或删除
+      if (e.target.closest('.chip.is-editing')) return;
       var b = e.target.closest('.chip');
-      if (!b) return;
-      state.cat = b.dataset.cat;
+      if (!b || b.id === 'btn-add-beauty-cat') return;
+      var cat = b.dataset.cat;
+      if (!cat) return;
+
+      // 双击改名（管理/非管理均生效）。「全部」不允许改名，跳过双击检测。
+      var now = Date.now();
+      if (cat !== 'all' && lastTap.cat === cat && now - lastTap.t < 350) {
+        lastTap.t = 0; lastTap.cat = null;
+        startRename(b);
+        return;
+      }
+      lastTap = { t: now, cat: cat };
+
+      // 管理模式下点击分类：不选中（再点一次「管理」可退出管理模式、恢复正常选择）
+      if (state.manageMode) return;
+      state.cat = cat;
       state.sub = null;
       render();
     });
 
     if (el.subs) el.subs.addEventListener('click', function (e) {
-      var b = e.target.closest('.sub-chip');
-      if (!b) return;
-      state.sub = b.dataset.sub || null;
+      var del = e.target.closest('.cat-del');
+      if (del) {
+        e.stopPropagation();
+        var b = e.target.closest('.sub-chip');
+        var subId = b && b.dataset.sub;
+        if (!subId || !state.cat || state.cat === 'all') return;
+        if (state.sub === subId) state.sub = null;
+        var ids = CL.store.items().filter(function (it) { return it.category === state.cat && it.sub === subId; }).map(function (it) { return it.id; });
+        CL.catalog.deleteSubCategory(state.cat, subId);
+        if (ids.length) CL.store.bulkPatch(ids, { sub: null });
+        else renderSubs();
+        CL.ui.toast('已删除子分类' + (ids.length ? '，' + ids.length + ' 件单品已归入「全部' + CL.catalog.name(state.cat) + '」' : ''));
+        return;
+      }
+      if (state.manageMode) return;
+      var b2 = e.target.closest('.sub-chip');
+      if (!b2) return;
+      state.sub = b2.dataset.sub || null;
       render();
     });
 
@@ -182,6 +288,37 @@
 
     $('beauty-search').addEventListener('input', function (e) {
       state.q = e.target.value; render();
+    });
+
+    /* 管理分类：新增 / 切换管理模式 */
+    $('btn-manage-beauty-cat').addEventListener('click', function (e) {
+      state.manageMode = !state.manageMode;
+      e.currentTarget.classList.toggle('is-on', state.manageMode);
+      render();
+    });
+    $('btn-add-beauty-cat').addEventListener('click', function () {
+      var name = window.prompt('新增彩妆护肤分类名称（如：香水、美甲）：');
+      if (name && name.trim()) {
+        CL.catalog.addCategory(name.trim(), { beauty: true });
+        render();
+      }
+    });
+
+    /* 删除分类确认框 */
+    $('btn-beauty-cat-del-confirm').addEventListener('click', function () {
+      CL.ui.closeModal('beauty-cat-del-modal');
+      if (pendingDeleteCat) {
+        var id = pendingDeleteCat; pendingDeleteCat = null;
+        deleteCategoryById(id);
+      }
+    });
+    $('btn-beauty-cat-del-cancel').addEventListener('click', function () {
+      pendingDeleteCat = null;
+      CL.ui.closeModal('beauty-cat-del-modal');
+    });
+    // 点遮罩 / ✕ 关闭确认框时也清空待删除标记，避免残留旧 id 被误删
+    $('beauty-cat-del-modal').addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) pendingDeleteCat = null;
     });
 
     /* 长按图片弹出操作菜单 */
@@ -236,35 +373,71 @@
       }
     });
 
-    // 底部导航横向滚动
+    // 底部导航：横向滚动 + 管理模式长按删除分类
     (function setupRail(rail) {
       if (!rail) return;
-      var isDown = false, startX, scrollLeft, vel = 0, raf = null, lastT, lastSL;
+      var LONG_PRESS = 550;
+      var MOVE_THRESHOLD = 10;
+      var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
+      var sort = { timer: null, chip: null };
+
       function decay() {
-        if (Math.abs(vel) < 0.5) { raf = null; return; }
-        rail.scrollLeft += vel; vel *= 0.92;
-        raf = requestAnimationFrame(decay);
+        if (Math.abs(scroll.vel) < 0.5) { scroll.raf = null; return; }
+        rail.scrollLeft += scroll.vel;
+        scroll.vel *= 0.92;
+        scroll.raf = requestAnimationFrame(decay);
       }
+      function clearLongPress() {
+        if (sort.timer) { clearTimeout(sort.timer); sort.timer = null; }
+      }
+
       rail.addEventListener('pointerdown', function (e) {
-        isDown = true; startX = e.clientX; scrollLeft = rail.scrollLeft; vel = 0; lastT = Date.now(); lastSL = scrollLeft;
+        state.railDragged = false;
+        // 管理模式下：长按某个分类 → 弹出确认框
+        if (state.manageMode) {
+          var dChip = e.target.closest('.chip[data-cat]');
+          if (dChip && dChip.dataset.cat !== 'all' && !dChip.classList.contains('is-editing')) {
+            clearLongPress();
+            sort.timer = setTimeout(function () {
+              if (dChip.classList.contains('is-editing')) return; // 正在改名则不删
+              confirmDeleteCategory(dChip.dataset.cat);
+            }, LONG_PRESS);
+          }
+        }
+        // 横向滚动（两种模式都启用）
+        scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
+        scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
         rail.style.cursor = 'grabbing';
-        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        if (scroll.raf) { cancelAnimationFrame(scroll.raf); scroll.raf = null; }
       });
+
       rail.addEventListener('pointermove', function (e) {
-        if (!isDown) return;
-        rail.scrollLeft = scrollLeft + (startX - e.clientX);
+        if (!scroll.isDown) return;
+        var dx = e.clientX - scroll.startX;
+        var dy = e.clientY - scroll.startY;
+        if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
+          clearLongPress();
+          state.railDragged = true; // 拖动过，松手后抑制 click 误触
+        }
+        rail.scrollLeft = scroll.scrollLeft + (e.clientX - scroll.startX);
         var now = Date.now();
-        vel = (rail.scrollLeft - lastSL) / (now - lastT || 1) * 16 || 0;
-        lastSL = rail.scrollLeft; lastT = now;
+        scroll.vel = (rail.scrollLeft - scroll.lastSL) / (now - scroll.lastT || 1) * 16 || 0;
+        scroll.lastSL = rail.scrollLeft; scroll.lastT = now;
       });
-      function end() {
-        isDown = false; rail.style.cursor = '';
-        if (raf) cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(decay);
-      }
-      rail.addEventListener('pointerup', end);
-      rail.addEventListener('pointercancel', end);
-      rail.addEventListener('pointerleave', end);
+
+      rail.addEventListener('pointerup', function () {
+        clearLongPress();
+        scroll.isDown = false; rail.style.cursor = '';
+        if (scroll.raf) cancelAnimationFrame(scroll.raf);
+        scroll.raf = requestAnimationFrame(decay);
+      });
+      rail.addEventListener('pointercancel', function () {
+        clearLongPress();
+        scroll.isDown = false; rail.style.cursor = '';
+      });
+      rail.addEventListener('pointerleave', function () {
+        if (!sort.active) { scroll.isDown = false; rail.style.cursor = ''; }
+      });
     })(el.cats);
 
     CL.store.on('items', render);
