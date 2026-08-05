@@ -19,7 +19,8 @@
     if (it.thumbBlob && !it.thumbUrl) it.thumbUrl = URL.createObjectURL(it.thumbBlob);
     if (!it.thumbUrl && it.url) it.thumbUrl = it.url;
     // 新数据：以 dataURL 字符串存储，跨会话/跨浏览器 100% 稳定
-    if (it.imgFull && !it.url) it.url = it.imgFull;
+    if (!it.url && it.imgFull) it.url = it.imgFull;
+    if (!it.url && it.img) it.url = it.img; // 退化：无大图时用主图，保证有主图可显示
     if (it.img && !it.thumbUrl) it.thumbUrl = it.img;
     if (!it.thumbUrl) it.thumbUrl = it.url;
     return it;
@@ -223,29 +224,39 @@
       return null;
     },
 
-    /* 把分类 id 指向的分类（含其下全部单品）移入回收站；返回 Promise<entry> */
-    trashCategory: function (catId) {
+    /* 把分类 id 指向的分类（含其下全部单品）移入回收站；返回 Promise<entry>。
+       defOverride：调用方在移除分类定义前先抓取的 def，避免 catalog.get 回退到 top。
+       关键顺序：先把快照写入 catTrash 落库；只有快照安全写入后，才真正从 live 移除单品。
+       这样即便后续移除失败，单品仍能从回收站恢复；且分类删除标记（deleteCategory 持久化
+       deletedDefaults）只在快照成功后写入，重载后不会再「复活」。 */
+    trashCategory: function (catId, defOverride) {
+      var def = defOverride || (global.CL.catalog && global.CL.catalog.get(catId)) || null;
+      if (!def || def.id !== catId) {
+        def = { id: catId, name: catId, icon: null, slot: 'top', z: 30, anchor: { x: 50, y: 16, w: 50 }, subs: [] };
+      }
       var live = items.filter(function (i) { return !i.deletedAt && i.category === catId; });
-      var def = (global.CL.catalog && global.CL.catalog.get(catId)) || null;
-      var defCopy = def
-        ? { id: def.id, name: def.name, icon: def.icon, slot: def.slot, z: def.z, anchor: def.anchor, subs: (def.subs || []).slice() }
-        : { id: catId, name: catId, icon: null, slot: 'top', z: 30, anchor: { x: 50, y: 16, w: 50 }, subs: [] };
-      var entry = { id: catId, deletedAt: Date.now(), def: defCopy, items: [] };
-      var removed = [];
-      live.forEach(function (it) {
-        release(it);
-        var p = persistable(it);
-        delete p.deletedAt;
-        entry.items.push(p);
-        removed.push(p.id);
+      var entry = {
+        id: catId,
+        deletedAt: Date.now(),
+        def: { id: def.id, name: def.name, icon: def.icon, slot: def.slot, z: def.z, anchor: def.anchor, subs: (def.subs || []).slice() },
+        items: live.map(function (it) {
+          var p = persistable(it);
+          delete p.deletedAt;
+          if (!p.imgFull && p.img) p.imgFull = p.img; // 快照保留大图；缺失时退化为主图，保证恢复后可用
+          return p;
+        })
+      };
+      // 1) 先写回收站快照（落库）。失败则直接 reject，绝不触碰 live 单品，避免数据丢失。
+      return db.put('catTrash', entry).then(function () {
+        // 2) 快照已安全持久化：现在才从 live 移除单品。
+        var removed = live.map(function (it) { release(it); return it.id; });
+        items = items.filter(function (i) { return removed.indexOf(i.id) < 0; });
+        catTrash.push(entry);
+        emit('items'); emit('trash');
+        // 3) 从 live 仓库删除单品记录（失败也不影响回收站，可重载从回收站恢复）
+        return Promise.all(removed.map(function (id) { return db.remove('items', id); }))
+          .then(function () { return entry; });
       });
-      items = items.filter(function (i) { return removed.indexOf(i.id) < 0; });
-      catTrash.push(entry);
-      emit('items');
-      var removes = removed.map(function (id) { return db.remove('items', id); });
-      return Promise.all(removes)
-        .then(function () { return db.put('catTrash', entry); })
-        .then(function () { emit('trash'); return entry; });
     },
 
     /* 恢复：把快照中的单品重新加回 live 仓库，并删除 catTrash 条目 */

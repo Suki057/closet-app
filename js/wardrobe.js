@@ -229,16 +229,20 @@
     CL.ui.openModal('cat-del-modal');
   }
 
-  /* 删除分类（确认后调用）：先把该分类下全部单品连同分类定义快照移入回收站，再移除分类定义 */
+  /* 删除分类（确认后调用）：先把该分类下全部单品连同分类定义快照移入回收站，
+     回收站快照安全落库后，才移除分类定义并持久化「删除标记」（deletedDefaults）。
+     顺序保证：重载后分类不会再「复活」；若回收站写入失败则不做任何改动、不丢单品。 */
   function deleteCategoryById(id) {
     if (state.cat === id) state.cat = 'all';
-    CL.store.trashCategory(id).then(function (entry) {
-      CL.catalog.deleteCategory(id);
+    var def = CL.catalog.get(id); // 移除分类定义前先抓取 def，供快照使用
+    CL.store.trashCategory(id, def).then(function (entry) {
+      CL.catalog.deleteCategory(id);   // 此刻快照已落库，才写入删除标记并持久化
       renderBar();
-      CL.ui.toast('已删除分类「' + entry.def.name + '」，' + entry.items.length + ' 件单品已移入回收站');
+      CL.ui.toast('已删除分类「' + ((entry.def && entry.def.name) || id) + '」，' + entry.items.length + ' 件单品已移入回收站');
     }).catch(function (e) {
       console.error(e);
-      CL.ui.toast('删除分类失败，请重试');
+      // 快照写入失败：不删除分类、不动单品，避免脏状态；给出清晰原因
+      CL.ui.toast('删除未执行：回收站写入出错（' + (e && e.message ? e.message : '未知') + '），请清理空间后重试');
     });
   }
 
