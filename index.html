@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=60">
+<link rel="stylesheet" href="css/style.css?v=61">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -23,7 +23,10 @@
 <body>
 
 <div id="splash" class="splash" aria-hidden="true">
-  <img class="splash-img" src="assets/princess_poster.jpg" alt="想要成为公主，先要相信自己就是公主">
+  <div class="splash-inner">
+    <img class="splash-img" src="assets/princess_poster.jpg" alt="想要成为公主，先要相信自己就是公主">
+    <button class="splash-cta" id="splash-enter" type="button">进入您的装扮世界</button>
+  </div>
 </div>
 
 <header class="topbar">
@@ -57,11 +60,6 @@
   <!-- ============ 首页 ============ -->
   <section class="view is-active" id="view-home">
     <div class="home">
-
-      <!-- Hero -->
-      <div class="home-hero">
-        <img class="home-poster" src="assets/princess_poster.jpg" alt="想要成为公主，先要相信自己就是公主">
-      </div>
 
       <!-- 最近导入 -->
       <section class="home-section" id="home-recent-section">
@@ -591,7 +589,7 @@
     });
   }
 
-  /* 启动页淡出：页面 load 后 350ms 淡出，2.6s 兜底强制隐藏（防止资源异常一直盖屏） */
+  /* 启动页：必须点击按钮进入，不自动跳过 */
   (function () {
     var done = false;
     function hideSplash() {
@@ -601,8 +599,12 @@
       s.classList.add('hide');
       setTimeout(function () { s.style.display = 'none'; }, 650);
     }
-    window.addEventListener('load', function () { setTimeout(hideSplash, 350); });
-    setTimeout(hideSplash, 2600);
+    var btn = document.getElementById('splash-enter');
+    if (btn) btn.addEventListener('click', hideSplash);
+    window.addEventListener('load', function () {
+      var s = document.getElementById('splash');
+      if (s) s.classList.remove('hide');
+    });
   })();
 </script>
 </body>
