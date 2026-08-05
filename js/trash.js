@@ -50,9 +50,10 @@
     if (!list.length) { el.catsGrid.innerHTML = ''; return; }
     el.catsGrid.innerHTML = list.map(function (entry) {
       var def = entry.def || { name: entry.id, icon: '' };
-      var n = (entry.items || []).length;
-      var first = entry.items && entry.items[0];
-      var thumb = first ? (first.imgFull || first.img) : '';
+      var ids = (entry.itemIds && entry.itemIds.slice()) || ((entry.items || []).map(function (p) { return p.id; }));
+      var n = ids.length;
+      var first = ids.length ? CL.store.getTrashedItem(ids[0]) : null;
+      var thumb = first ? (first.thumbUrl || first.url || first.imgFull || first.img || '') : '';
       var d = daysLeft(entry);
       var leftTxt = d > 0 ? ('剩余 ' + d + ' 天') : '即将永久清除';
       return '<article class="card cat-trash-card" data-id="' + esc(entry.id) + '">' +

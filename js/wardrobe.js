@@ -236,13 +236,14 @@
     if (state.cat === id) state.cat = 'all';
     var def = CL.catalog.get(id); // 移除分类定义前先抓取 def，供快照使用
     CL.store.trashCategory(id, def).then(function (entry) {
-      CL.catalog.deleteCategory(id);   // 此刻快照已落库，才写入删除标记并持久化
+      CL.catalog.deleteCategory(id);   // 此刻回收站已落库，才写入删除标记并持久化
       renderBar();
-      CL.ui.toast('已删除分类「' + ((entry.def && entry.def.name) || id) + '」，' + entry.items.length + ' 件单品已移入回收站');
+      var n = (entry.itemIds ? entry.itemIds.length : 0);
+      CL.ui.toast('已删除分类「' + ((entry.def && entry.def.name) || id) + '」，' + n + ' 件单品已移入回收站');
     }).catch(function (e) {
       console.error(e);
-      // 快照写入失败：不删除分类、不动单品，避免脏状态；给出清晰原因
-      CL.ui.toast('删除未执行：回收站写入出错（' + (e && e.message ? e.message : '未知') + '），请清理空间后重试');
+      // 写库失败：不删除分类、不动单品，避免脏状态；给出清晰原因
+      CL.ui.toast('删除未执行：' + (e && e.message ? e.message : '未知错误') + '，请重试');
     });
   }
 
@@ -392,6 +393,10 @@
     $('btn-cat-del-cancel').addEventListener('click', function () {
       pendingDeleteCat = null;
       CL.ui.closeModal('cat-del-modal');
+    });
+    // 点遮罩 / ✕ 关闭确认框时也清空待删除标记，避免残留旧 id 被误删
+    $('cat-del-modal').addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) pendingDeleteCat = null;
     });
 
     // 底部分类导航栏：横向滚动 + 长按拖拽排序
