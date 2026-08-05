@@ -117,7 +117,7 @@
   CATEGORIES.forEach(function (c) { MAP[c.id] = c; });
 
 /* 用户自定义类目与重命名持久化 */
-var CUSTOM = { renames: {}, custom: [], order: [], deletedSubs: [] };
+var CUSTOM = { renames: {}, custom: [], order: [], deletedSubs: [], deletedDefaults: [] };
 function loadCustom() {
   try {
     var raw = localStorage.getItem('CL.catalog.custom');
@@ -143,6 +143,14 @@ if (CUSTOM.order && CUSTOM.order.length) {
     return ia - ib;
   });
 }
+
+  /* 移除已删除的内置分类：删除只改内存，重载时由硬编码列表重建，需此处按 deletedDefaults 过滤 */
+  if (CUSTOM.deletedDefaults && CUSTOM.deletedDefaults.length) {
+    CATEGORIES = CATEGORIES.filter(function (c) {
+      if (CUSTOM.deletedDefaults.indexOf(c.id) >= 0) { delete MAP[c.id]; return false; }
+      return true;
+    });
+  }
 
   function get(id) { return MAP[id] || MAP.top; }
   function name(id) { return (MAP[id] || {}).name || '其它'; }
@@ -194,7 +202,11 @@ if (CUSTOM.order && CUSTOM.order.length) {
     delete MAP[id];
     // 清理 CUSTOM
     var ci = CUSTOM.custom.findIndex(function (x) { return x.id === id; });
-    if (ci >= 0) CUSTOM.custom.splice(ci, 1);
+    if (ci >= 0) {
+      CUSTOM.custom.splice(ci, 1);            // 自定义分类：从自定义列表移除即不会再被重建
+    } else if (CUSTOM.deletedDefaults.indexOf(id) < 0) {
+      CUSTOM.deletedDefaults.push(id);        // 内置分类：记录删除，避免重载后被硬编码列表重新加回
+    }
     var oi = CUSTOM.order.indexOf(id);
     if (oi >= 0) CUSTOM.order.splice(oi, 1);
     delete CUSTOM.renames[id];
