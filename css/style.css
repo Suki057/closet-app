@@ -69,6 +69,16 @@ body::before{
 h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
 p{margin:0}
 button,input{font:inherit;color:inherit}
+/* 表单控件：双击/长按不再触发系统缩放与延迟点击下方，提升输入体验 */
+input,select,textarea{touch-action:manipulation}
+
+/* 触控设备（手指）：输入框字号不低于 16px，避免 iOS 聚焦时整页放大 */
+@media (pointer: coarse){
+  input,select,textarea,
+  .field input,
+  .settings-body .field input,
+  .search input{font-size:16px}
+}
 button{cursor:pointer;border:none;background:none}
 .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
