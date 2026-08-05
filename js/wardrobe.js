@@ -323,12 +323,13 @@
       var b = e.target.closest('.chip');
       if (!b || b.id === 'btn-add-cat') return;
       var cat = b.dataset.cat;
-      if (!cat || cat === 'all') return;
+      if (!cat) return;
 
       // 双击改名（管理/非管理均生效）。首击在非管理模式会触发上方重渲染、销毁原 chip，
       // 导致原生 dblclick 不会触发，故在此用计时器手动判定。
+      // 「全部」不允许改名，跳过双击检测。
       var now = Date.now();
-      if (lastTap.cat === cat && now - lastTap.t < 350) {
+      if (cat !== 'all' && lastTap.cat === cat && now - lastTap.t < 350) {
         lastTap.t = 0; lastTap.cat = null;
         startRename(b);
         return;
