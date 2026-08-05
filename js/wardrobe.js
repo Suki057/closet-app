@@ -5,6 +5,8 @@
   var CL = global.CL;
   var state = { cat: 'all', sub: null, q: '', favOnly: false, loc: null, editing: null, editingSub: null, manageMode: false, railDragged: false, menuItemId: null, suppressClick: false };
   var longPress = { timer: null, id: null, startX: 0, startY: 0, triggered: false };
+  var lastTap = { t: 0, cat: null };      // 手动双击检测（首击会重渲染，原生 dblclick 不触发）
+  var pendingDeleteCat = null;            // 待确认删除的分类 id
 
   var el = {};
 
@@ -215,16 +217,29 @@
     input.addEventListener('blur', function () { commit(true); });
   }
 
-  /* 删除分类（管理模式长按触发） */
+  /* 弹出确认框：确认后数据才流向回收站 */
+  function confirmDeleteCategory(id) {
+    var c = CL.catalog.get(id);
+    pendingDeleteCat = id;
+    var nameEl = $('cat-del-name');
+    var cntEl = $('cat-del-count');
+    var n = CL.store.items().filter(function (i) { return i.category === id; }).length;
+    if (nameEl) nameEl.textContent = c ? c.name : '该分类';
+    if (cntEl) cntEl.textContent = String(n);
+    CL.ui.openModal('cat-del-modal');
+  }
+
+  /* 删除分类（确认后调用）：先把该分类下全部单品连同分类定义快照移入回收站，再移除分类定义 */
   function deleteCategoryById(id) {
     if (state.cat === id) state.cat = 'all';
-    // 先移除分类定义，再批量改单品归属。bulkPatch 的 emit 会触发一次完整渲染，
-    // 而网格因可见集合未变会自动跳过重绘，底部栏同步刷新——避免二次重绘图片网格导致卡顿。
-    var ids = CL.store.items().filter(function (it) { return it.category === id; }).map(function (it) { return it.id; });
-    CL.catalog.deleteCategory(id);
-    if (ids.length) CL.store.bulkPatch(ids, { category: 'top', sub: null });
-    else renderBar();
-    CL.ui.toast('已删除分类' + (ids.length ? '，' + ids.length + ' 件单品已归入上衣' : ''));
+    CL.store.trashCategory(id).then(function (entry) {
+      CL.catalog.deleteCategory(id);
+      renderBar();
+      CL.ui.toast('已删除分类「' + entry.def.name + '」，' + entry.items.length + ' 件单品已移入回收站');
+    }).catch(function (e) {
+      console.error(e);
+      CL.ui.toast('删除分类失败，请重试');
+    });
   }
 
   /* ---------- 长按菜单 ---------- */
@@ -298,11 +313,24 @@
       if (state.railDragged) { state.railDragged = false; return; }
       // 编辑分类名时，点击输入框/确定按钮不触发筛选或删除
       if (e.target.closest('.chip.is-editing')) return;
-      // 管理模式下点击分类：不选中（再点一次「管理」可退出管理模式、恢复正常选择）
-      if (state.manageMode) return;
       var b = e.target.closest('.chip');
       if (!b || b.id === 'btn-add-cat') return;
-      state.cat = b.dataset.cat;
+      var cat = b.dataset.cat;
+      if (!cat || cat === 'all') return;
+
+      // 双击改名（管理/非管理均生效）。首击在非管理模式会触发上方重渲染、销毁原 chip，
+      // 导致原生 dblclick 不会触发，故在此用计时器手动判定。
+      var now = Date.now();
+      if (lastTap.cat === cat && now - lastTap.t < 350) {
+        lastTap.t = 0; lastTap.cat = null;
+        startRename(b);
+        return;
+      }
+      lastTap = { t: now, cat: cat };
+
+      // 管理模式下点击分类：不选中（再点一次「管理」可退出管理模式、恢复正常选择）
+      if (state.manageMode) return;
+      state.cat = cat;
       state.sub = null;
       state.loc = null;
       render();
@@ -312,13 +340,6 @@
       el.placeHome.addEventListener('click', onPlaceClick);
       el.placeRes.addEventListener('click', onPlaceClick);
     }
-
-    el.cats.addEventListener('dblclick', function (e) {
-      var b = e.target.closest('.chip');
-      if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
-      if (b.classList.contains('is-editing')) return;
-      startRename(b);
-    });
 
     $('btn-manage-cat').addEventListener('click', function (e) {
       state.manageMode = !state.manageMode;
@@ -354,6 +375,19 @@
       if (!b) return;
       state.sub = b.dataset.sub || null;
       render();
+    });
+
+    $('btn-cat-del-confirm').addEventListener('click', function () {
+      CL.ui.closeModal('cat-del-modal');
+      if (pendingDeleteCat) {
+        var id = pendingDeleteCat;
+        pendingDeleteCat = null;
+        deleteCategoryById(id);
+      }
+    });
+    $('btn-cat-del-cancel').addEventListener('click', function () {
+      pendingDeleteCat = null;
+      CL.ui.closeModal('cat-del-modal');
     });
 
     // 底部分类导航栏：横向滚动 + 长按拖拽排序
@@ -422,13 +456,14 @@
         state.railDragged = false;
         sort.startX = e.clientX; sort.startY = e.clientY;
 
-        // 管理模式下：长按某个分类 → 删除
+        // 管理模式下：长按某个分类 → 弹出确认框
         if (state.manageMode) {
           var dChip = e.target.closest('.chip[data-cat]');
           if (dChip && dChip.dataset.cat !== 'all' && !dChip.classList.contains('is-editing')) {
             clearLongPress();
             sort.timer = setTimeout(function () {
-              deleteCategoryById(dChip.dataset.cat);
+              if (dChip.classList.contains('is-editing')) return; // 正在改名则不删
+              confirmDeleteCategory(dChip.dataset.cat);
             }, 550);
           }
           // 管理模式同样允许横向滚动

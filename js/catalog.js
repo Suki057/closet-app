@@ -244,6 +244,37 @@ if (CUSTOM.order && CUSTOM.order.length) {
     return true;
   }
 
+  /* 从回收站恢复一个分类：按 def 重建定义（含子类目/图标/锚点）。
+     内置类目（id 不以 custom_ 开头）：从 deletedDefaults 移除使其重新可见，并恢复其重命名；
+     自定义类目：重新加入 CUSTOM.custom 与排序列表。 */
+  function restoreCategory(def) {
+    if (!def || !def.id || MAP[def.id]) return MAP[def.id] || null;
+    var isCustom = def.id.indexOf('custom_') === 0;
+    var c = {
+      id: def.id,
+      name: def.name || def.id,
+      icon: def.icon || P.custom,
+      slot: def.slot || 'top',
+      z: (def.z != null ? def.z : 30),
+      anchor: def.anchor || { x: 50, y: 16, w: 50 },
+      subs: def.subs ? def.subs.slice() : []
+    };
+    CATEGORIES.push(c);
+    MAP[def.id] = c;
+    if (isCustom) {
+      if (CUSTOM.custom.every(function (x) { return x.id !== def.id; })) CUSTOM.custom.push(c);
+      if (CUSTOM.order.indexOf(def.id) < 0) CUSTOM.order.push(def.id);
+    } else {
+      var di = CUSTOM.deletedDefaults.indexOf(def.id);
+      if (di >= 0) CUSTOM.deletedDefaults.splice(di, 1);
+      CUSTOM.renames[def.id] = c.name; // 恢复其曾用名
+      // 该类目此前被整类删除时，其子类目删除记录一并清除，确保子分类随分类一起回来
+      CUSTOM.deletedSubs = CUSTOM.deletedSubs.filter(function (k) { return k.indexOf(def.id + ':') !== 0; });
+    }
+    saveCustom();
+    return c;
+  }
+
   /**
    * 根据抠图结果的几何特征推断类目。
    * feat: { aspect(宽/高), fill(前景占包围盒比例), area(占全图比例),
@@ -310,6 +341,7 @@ if (CUSTOM.order && CUSTOM.order.length) {
     subsOf: subsOf, subName: subName,
     addCategory: addCategory, renameCategory: renameCategory,
     deleteCategory: deleteCategory,
+    restoreCategory: restoreCategory,
     deleteSubCategory: deleteSubCategory,
     setCategoryOrder: setCategoryOrder,
     ids: function () { return CATEGORIES.map(function (c) { return c.id; }); },

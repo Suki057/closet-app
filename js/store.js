@@ -5,6 +5,7 @@
   var db = global.CL.db;
   var items = [];
   var looks = [];
+  var catTrash = []; // 分类级回收站：被删分类的定义快照 + 其下全部单品
   var listeners = { items: [], looks: [], trash: [] };
   var TRASH_TTL = 7 * 24 * 3600 * 1000; // 回收站保留 7 天
 
@@ -42,19 +43,39 @@
     listeners[kind].forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
   }
 
+  /* 移除搭配中对指定单品 id 的引用（永久删除单品/分类时调用，避免悬空图层） */
+  function cleanLooks(ids) {
+    if (!ids || !ids.length) return;
+    var set = {};
+    ids.forEach(function (id) { set[id] = true; });
+    var changed = [];
+    looks.forEach(function (lk) {
+      if (!lk.layers || !lk.layers.length) return;
+      var before = lk.layers.length;
+      lk.layers = lk.layers.filter(function (ly) { return !set[ly.itemId]; });
+      if (lk.layers.length !== before) changed.push(lk);
+    });
+    changed.forEach(function (lk) {
+      var o = {};
+      Object.keys(lk).forEach(function (k) { if (k !== 'coverUrl') o[k] = lk[k]; });
+      db.put('looks', o);
+    });
+  }
+
   function liveItems() { return items.filter(function (i) { return !i.deletedAt; }); }
 
   var store = {
     on: function (kind, fn) { listeners[kind].push(fn); },
 
     init: function () {
-      return Promise.all([db.all('items'), db.all('looks')]).then(function (res) {
+      return Promise.all([db.all('items'), db.all('looks'), db.all('catTrash')]).then(function (res) {
         items = (res[0] || []).map(hydrate).sort(function (a, b) { return b.createdAt - a.createdAt; });
         looks = (res[1] || []).map(function (l) {
           if (l.coverBlob && !l.coverUrl) l.coverUrl = URL.createObjectURL(l.coverBlob);
           return l;
         }).sort(function (a, b) { return b.createdAt - a.createdAt; });
-        emit('items'); emit('looks');
+        catTrash = (res[2] || []).slice().sort(function (a, b) { return (b.deletedAt || 0) - (a.deletedAt || 0); });
+        emit('items'); emit('looks'); emit('trash');
       });
     },
 
@@ -187,6 +208,76 @@
       });
       emit('items'); emit('trash');
       return Promise.resolve();
+    },
+
+    /* ---- 分类级回收站 ----
+       删除某个分类时，把该分类下的全部 live 单品连同分类定义快照一并存入 catTrash。
+       恢复：把单品重新加回 live 仓库，并重建分类定义。
+       永久删除：丢弃快照（单品已不在 live 仓库），并清理搭配中对该类目单品的引用。 */
+    trashedCategories: function () {
+      return catTrash.slice();
+    },
+
+    trashedCategory: function (catId) {
+      for (var i = 0; i < catTrash.length; i++) if (catTrash[i].id === catId) return catTrash[i];
+      return null;
+    },
+
+    /* 把分类 id 指向的分类（含其下全部单品）移入回收站；返回 Promise<entry> */
+    trashCategory: function (catId) {
+      var live = items.filter(function (i) { return !i.deletedAt && i.category === catId; });
+      var def = (global.CL.catalog && global.CL.catalog.get(catId)) || null;
+      var defCopy = def
+        ? { id: def.id, name: def.name, icon: def.icon, slot: def.slot, z: def.z, anchor: def.anchor, subs: (def.subs || []).slice() }
+        : { id: catId, name: catId, icon: null, slot: 'top', z: 30, anchor: { x: 50, y: 16, w: 50 }, subs: [] };
+      var entry = { id: catId, deletedAt: Date.now(), def: defCopy, items: [] };
+      var removed = [];
+      live.forEach(function (it) {
+        release(it);
+        var p = persistable(it);
+        delete p.deletedAt;
+        entry.items.push(p);
+        removed.push(p.id);
+      });
+      items = items.filter(function (i) { return removed.indexOf(i.id) < 0; });
+      catTrash.push(entry);
+      emit('items');
+      var removes = removed.map(function (id) { return db.remove('items', id); });
+      return Promise.all(removes)
+        .then(function () { return db.put('catTrash', entry); })
+        .then(function () { emit('trash'); return entry; });
+    },
+
+    /* 恢复：把快照中的单品重新加回 live 仓库，并删除 catTrash 条目 */
+    restoreCategoryItems: function (catId) {
+      var idx = catTrash.findIndex(function (e) { return e.id === catId; });
+      if (idx < 0) return Promise.resolve(null);
+      var entry = catTrash[idx];
+      var restored = [];
+      entry.items.forEach(function (p) {
+        var it = hydrate(Object.assign({}, p));
+        it.deletedAt = null;
+        items.unshift(it);
+        restored.push(it);
+      });
+      catTrash.splice(idx, 1);
+      emit('items'); emit('trash');
+      var writes = restored.map(function (it) { return db.put('items', persistable(it)); });
+      return Promise.all(writes)
+        .then(function () { return db.remove('catTrash', catId); })
+        .then(function () { return entry; });
+    },
+
+    /* 永久删除：丢弃 catTrash 条目（单品已不在 live 仓库），并清理搭配中的引用 */
+    purgeCategory: function (catId) {
+      var idx = catTrash.findIndex(function (e) { return e.id === catId; });
+      if (idx < 0) return Promise.resolve(null);
+      var entry = catTrash[idx];
+      var ids = entry.items.map(function (p) { return p.id; });
+      catTrash.splice(idx, 1);
+      emit('trash');
+      cleanLooks(ids);
+      return db.remove('catTrash', catId).then(function () { return entry; });
     },
 
     /* ---- looks ---- */

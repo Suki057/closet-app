@@ -481,6 +481,41 @@ button{cursor:pointer;border:none;background:none}
 .trash-actions .mini-btn.text.danger{color:#C77B6E}
 .trash-actions .mini-btn.text.danger:hover{box-shadow:inset 0 0 0 1px rgba(255,138,138,.6)}
 
+/* 回收站：单品 / 分类 切换 tab */
+.trash-tabs{display:flex;gap:8px;margin:0 0 18px}
+.trash-tab{
+  appearance:none;border:0;background:var(--surface-2);color:var(--ink-3);
+  font:inherit;font-size:14px;font-weight:600;padding:8px 20px;border-radius:999px;
+  box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;
+}
+.trash-tab.is-active{background:var(--accent-soft);color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--gold-line)}
+.cat-trash-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+
+/* 分类回收卡片 */
+.cat-trash-card .card-shot{position:relative;align-items:center;justify-content:center;background:linear-gradient(180deg,#FBFCF9,#EEF1E8)}
+.cat-trash-card .cat-trash-ico .ico{width:46px;height:46px;opacity:.85}
+.cat-trash-card .card-shot img{max-width:90%;max-height:90%;border-radius:10px}
+.cat-trash-badge{
+  position:absolute;top:8px;left:8px;font-size:11px;font-weight:700;color:#fff;
+  background:rgba(80,72,64,.78);padding:2px 9px;border-radius:999px;backdrop-filter:blur(2px);
+}
+.cat-trash-card .trash-body{align-items:stretch;gap:6px}
+.trash-cat-name{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700;color:var(--ink)}
+.trash-cat-name .ico{width:17px;height:17px;opacity:.7}
+.cat-trash-card .trash-actions{flex-direction:row;justify-content:flex-start}
+
+/* 删除分类确认弹窗 */
+.modal-confirm{max-width:420px}
+.confirm-body{padding:22px 22px 20px;text-align:center}
+.confirm-title{font-size:19px;margin:0 0 10px;color:var(--ink)}
+.confirm-title #cat-del-name{color:var(--accent-ink)}
+.confirm-text{font-size:14px;color:var(--ink-3);line-height:1.7;margin:0 0 20px}
+.confirm-text b{color:var(--ink);font-weight:700}
+.confirm-actions{display:flex;gap:12px;justify-content:center}
+.confirm-actions .btn{flex:1 1 0;max-width:160px}
+.btn-danger{background:#E0615A;color:#fff;border:0}
+.btn-danger:hover{background:#CF524C}
+
 .stage-wrap{margin-top:16px;position:relative}
 .stage{
   position:relative;width:100%;max-width:430px;margin:0 auto;
