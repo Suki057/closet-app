@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=56">
+<link rel="stylesheet" href="css/style.css?v=57">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -267,13 +267,8 @@
         <h2>回收站</h2>
         <button class="btn btn-ghost danger btn-sm" id="trash-clear" hidden>清空</button>
       </div>
-      <p class="trash-tip">删除的单品 / 分类会暂存在这里，保留 7 天后自动永久清除。可随时恢复或立即永久删除。</p>
-      <div class="trash-tabs" id="trash-tabs">
-        <button class="trash-tab is-active" data-trash="items">单品</button>
-        <button class="trash-tab" data-trash="cats">分类</button>
-      </div>
+      <p class="trash-tip">删除的单品会暂存在这里，保留 7 天后自动永久清除。可随时恢复或立即永久删除。</p>
       <div class="grid" id="trash-grid"></div>
-      <div class="grid cat-trash-grid" id="trash-cats-grid" hidden></div>
       <div class="empty" id="trash-empty" hidden>
         <div class="empty-art">
           <svg class="art" viewBox="0 0 120 120">
@@ -283,7 +278,7 @@
           </svg>
         </div>
         <h3>回收站是空的</h3>
-        <p>删除的单品 / 分类会出现在这里，7 天内都能找回来。</p>
+        <p>删除的单品会出现在这里，7 天内都能找回来。</p>
       </div>
     </div>
   </section>
@@ -513,7 +508,7 @@
   <div class="modal-card modal-confirm">
     <div class="modal-body confirm-body">
       <h3 class="confirm-title">删除分类「<span id="cat-del-name"></span>」？</h3>
-      <p class="confirm-text">该分类下的 <b id="cat-del-count">0</b> 件单品将移入回收站，可在「回收站 → 分类」中恢复或永久删除。</p>
+      <p class="confirm-text">该分类下的 <b id="cat-del-count">0</b> 件单品将移到「未分类」（不会丢失），分类本身会被移除。</p>
       <div class="confirm-actions">
         <button class="btn btn-soft" id="btn-cat-del-cancel">取消</button>
         <button class="btn btn-danger" id="btn-cat-del-confirm">删除</button>
@@ -562,17 +557,17 @@
 <div class="toast" id="toast" hidden></div>
 <div class="drop-hint" id="drop-hint" hidden><div>松手即可导入</div></div>
 
-<script src="js/db.js?v=8"></script>
+<script src="js/db.js?v=9"></script>
 <script src="js/color.js"></script>
-<script src="js/catalog.js?v=9"></script>
+<script src="js/catalog.js?v=10"></script>
 <script src="js/segment.js?v=6"></script>
-<script src="js/store.js?v=15"></script>
-<script src="js/wardrobe.js?v=29"></script>
+<script src="js/store.js?v=16"></script>
+<script src="js/wardrobe.js?v=30"></script>
 <script src="js/studio.js?v=4"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/beauty.js?v=1"></script>
 <script src="js/home.js?v=4"></script>
-<script src="js/trash.js?v=6"></script>
+<script src="js/trash.js?v=7"></script>
 <script src="js/app.js?v=15"></script>
 <script>
   if ('serviceWorker' in navigator) {

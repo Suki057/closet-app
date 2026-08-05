@@ -3,12 +3,12 @@
   'use strict';
 
   var DB_NAME = 'closet-db';
-  var DB_VER = 6;
-  var STORES = ['items', 'looks', 'catTrash'];
+  var DB_VER = 7;
+  var STORES = ['items', 'looks'];
 
   var dbPromise = null;
   var memoryMode = false;
-  var mem = { items: new Map(), looks: new Map(), catTrash: new Map() };
+  var mem = { items: new Map(), looks: new Map() };
 
   function openDB() {
     if (dbPromise) return dbPromise;
@@ -33,9 +33,9 @@
         if (db.objectStoreNames.contains('trash')) {
           db.deleteObjectStore('trash');
         }
-        // 分类级回收站：存储被删分类的定义快照 + 其下全部单品
-        if (!db.objectStoreNames.contains('catTrash')) {
-          db.createObjectStore('catTrash', { keyPath: 'id' });
+        // 分类级回收站已废弃（改回「删除分类 → 单品归入未分类」），清理遗留仓库
+        if (db.objectStoreNames.contains('catTrash')) {
+          db.deleteObjectStore('catTrash');
         }
       };
       req.onsuccess = function () { resolve(req.result); };

@@ -13,7 +13,8 @@
     hat:  'M6.4 15.4C6.4 9.4 8.6 3.4 12 3.4s5.6 6 5.6 12 M2.5 16.2c0 2 4.2 3.4 9.5 3.4s9.5-1.4 9.5-3.4-4.2-3-9.5-3-9.5 1-9.5 3z',
     acc:  'M5.4 5.6c0 6.4 2.9 9.6 6.6 9.6s6.6-3.2 6.6-9.6 M12 15.2v2.2 M12 21.4a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
     all:  'M4 6.5h16 M4 12h16 M4 17.5h16',
-    custom: 'M12 3l2.4 7.4H22l-6 4.4 2.3 7.2-6-4.4-6 4.4 2.3-7.2-6-4.4h7.6z'
+    custom: 'M12 3l2.4 7.4H22l-6 4.4 2.3 7.2-6-4.4-6 4.4 2.3-7.2-6-4.4h7.6z',
+    other: 'M5 5h14v14H5z'
   };
 
   /* z: 叠放层级；slot: 同槽位互斥；anchor: 人台上的默认位置（百分比）
@@ -87,6 +88,8 @@
         { id: 'acc-ring', name: '戒指' },
         { id: 'acc-watch', name: '手表' }
       ] },
+    /* 未分类：删除其它分类时，其单品暂存于此（受保护，不可被删除，避免无限套娃） */
+    { id: 'uncategorized', name: '未分类', icon: P.other, slot: 'top', z: 5, anchor: { x: 50, y: 16, w: 50 }, subs: [] },
     /* 彩妆护肤：独立分组，不在衣橱/搭配间显示 */
     { id: 'beauty-makeup', name: '彩妆', icon: P.custom, slot: 'acc', z: 60, anchor: { x: 50, y: 11, w: 16 }, multi: true,
       subs: [
@@ -244,37 +247,6 @@ if (CUSTOM.order && CUSTOM.order.length) {
     return true;
   }
 
-  /* 从回收站恢复一个分类：按 def 重建定义（含子类目/图标/锚点）。
-     内置类目（id 不以 custom_ 开头）：从 deletedDefaults 移除使其重新可见，并恢复其重命名；
-     自定义类目：重新加入 CUSTOM.custom 与排序列表。 */
-  function restoreCategory(def) {
-    if (!def || !def.id || MAP[def.id]) return MAP[def.id] || null;
-    var isCustom = def.id.indexOf('custom_') === 0;
-    var c = {
-      id: def.id,
-      name: def.name || def.id,
-      icon: def.icon || P.custom,
-      slot: def.slot || 'top',
-      z: (def.z != null ? def.z : 30),
-      anchor: def.anchor || { x: 50, y: 16, w: 50 },
-      subs: def.subs ? def.subs.slice() : []
-    };
-    CATEGORIES.push(c);
-    MAP[def.id] = c;
-    if (isCustom) {
-      if (CUSTOM.custom.every(function (x) { return x.id !== def.id; })) CUSTOM.custom.push(c);
-      if (CUSTOM.order.indexOf(def.id) < 0) CUSTOM.order.push(def.id);
-    } else {
-      var di = CUSTOM.deletedDefaults.indexOf(def.id);
-      if (di >= 0) CUSTOM.deletedDefaults.splice(di, 1);
-      CUSTOM.renames[def.id] = c.name; // 恢复其曾用名
-      // 该类目此前被整类删除时，其子类目删除记录一并清除，确保子分类随分类一起回来
-      CUSTOM.deletedSubs = CUSTOM.deletedSubs.filter(function (k) { return k.indexOf(def.id + ':') !== 0; });
-    }
-    saveCustom();
-    return c;
-  }
-
   /**
    * 根据抠图结果的几何特征推断类目。
    * feat: { aspect(宽/高), fill(前景占包围盒比例), area(占全图比例),
@@ -341,7 +313,6 @@ if (CUSTOM.order && CUSTOM.order.length) {
     subsOf: subsOf, subName: subName,
     addCategory: addCategory, renameCategory: renameCategory,
     deleteCategory: deleteCategory,
-    restoreCategory: restoreCategory,
     deleteSubCategory: deleteSubCategory,
     setCategoryOrder: setCategoryOrder,
     ids: function () { return CATEGORIES.map(function (c) { return c.id; }); },

@@ -217,8 +217,9 @@
     input.addEventListener('blur', function () { commit(true); });
   }
 
-  /* 弹出确认框：确认后数据才流向回收站 */
+  /* 弹出确认框：确认后单品归入「未分类」、分类被移除 */
   function confirmDeleteCategory(id) {
+    if (id === 'uncategorized' || id === 'all') return; // 受保护，不可删除
     var c = CL.catalog.get(id);
     pendingDeleteCat = id;
     var nameEl = $('cat-del-name');
@@ -229,17 +230,18 @@
     CL.ui.openModal('cat-del-modal');
   }
 
-  /* 删除分类（确认后调用）：先把该分类下全部单品连同分类定义快照移入回收站，
-     回收站快照安全落库后，才移除分类定义并持久化「删除标记」（deletedDefaults）。
-     顺序保证：重载后分类不会再「复活」；若回收站写入失败则不做任何改动、不丢单品。 */
+  /* 删除分类（确认后调用）：先把该分类下全部单品归入「未分类」，再移除分类定义。
+     单品数据不丢、不复制大图，因此任何设备上都一定能删得动；重载后分类不会复活。 */
   function deleteCategoryById(id) {
+    if (id === 'uncategorized' || id === 'all') return;
     if (state.cat === id) state.cat = 'all';
-    var def = CL.catalog.get(id); // 移除分类定义前先抓取 def，供快照使用
-    CL.store.trashCategory(id, def).then(function (entry) {
-      CL.catalog.deleteCategory(id);   // 此刻回收站已落库，才写入删除标记并持久化
+    var c = CL.catalog.get(id);
+    var name = (c && c.name) || id;
+    var n = CL.store.items().filter(function (i) { return i.category === id; }).length;
+    CL.store.moveItemsToCategory(id, 'uncategorized').then(function () {
+      CL.catalog.deleteCategory(id);   // 写入删除标记并持久化（重载后不再复活）
       renderBar();
-      var n = (entry.itemIds ? entry.itemIds.length : 0);
-      CL.ui.toast('已删除分类「' + ((entry.def && entry.def.name) || id) + '」，' + n + ' 件单品已移入回收站');
+      CL.ui.toast('已删除分类「' + name + '」，' + n + ' 件单品已归入「未分类」');
     }).catch(function (e) {
       console.error(e);
       // 写库失败：不删除分类、不动单品，避免脏状态；给出清晰原因
