@@ -131,6 +131,14 @@ function saveCustom() {
   try { localStorage.setItem('CL.catalog.custom', JSON.stringify(CUSTOM)); } catch (e) {}
 }
 loadCustom();
+// 防御性补齐：旧版本 / 部分写入的 localStorage 可能缺少某些数组字段，
+// 后续代码若直接 .indexOf() 会抛 undefined 错误，导致分类删不掉、删除标记无法持久化。
+CUSTOM.custom = CUSTOM.custom || [];
+CUSTOM.order = CUSTOM.order || [];
+CUSTOM.deletedSubs = CUSTOM.deletedSubs || [];
+CUSTOM.deletedDefaults = CUSTOM.deletedDefaults || [];
+CUSTOM.renames = CUSTOM.renames || {};
+
 CATEGORIES.forEach(function (c) { if (CUSTOM.renames[c.id]) c.name = CUSTOM.renames[c.id]; });
 CUSTOM.custom.forEach(function (c) { if (c && c.id && !MAP[c.id]) { CATEGORIES.push(c); MAP[c.id] = c; } });
 
@@ -160,8 +168,9 @@ if (CUSTOM.order && CUSTOM.order.length) {
   function subsOf(id) {
     var c = MAP[id];
     var arr = (c && c.subs) ? c.subs : [];
+    var del = CUSTOM.deletedSubs || [];
     return arr.filter(function (s) {
-      return CUSTOM.deletedSubs.indexOf(id + ':' + s.id) < 0;
+      return del.indexOf(id + ':' + s.id) < 0;
     });
   }
   function subName(catId, subId) {
@@ -203,6 +212,11 @@ if (CUSTOM.order && CUSTOM.order.length) {
     // 移除
     CATEGORIES.splice(idx, 1);
     delete MAP[id];
+    // 防御性补齐：避免部分写入/旧数据导致 .indexOf() 崩溃
+    CUSTOM.custom = CUSTOM.custom || [];
+    CUSTOM.order = CUSTOM.order || [];
+    CUSTOM.deletedDefaults = CUSTOM.deletedDefaults || [];
+    CUSTOM.deletedSubs = CUSTOM.deletedSubs || [];
     // 清理 CUSTOM
     var ci = CUSTOM.custom.findIndex(function (x) { return x.id === id; });
     if (ci >= 0) {
@@ -225,6 +239,7 @@ if (CUSTOM.order && CUSTOM.order.length) {
     var idx = c.subs.findIndex(function (s) { return s.id === subId; });
     if (idx < 0) return false;
     c.subs.splice(idx, 1);
+    CUSTOM.deletedSubs = CUSTOM.deletedSubs || [];
     var key = catId + ':' + subId;
     if (CUSTOM.deletedSubs.indexOf(key) < 0) CUSTOM.deletedSubs.push(key);
     saveCustom();
