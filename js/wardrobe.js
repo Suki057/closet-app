@@ -28,18 +28,14 @@
       counts.all++;
       counts[i.category] = (counts[i.category] || 0) + 1;
     });
-    var html = '<div class="chip-swipe" data-cat="all"><button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
-      icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button></div>';
+    var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
+      icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
     CL.catalog.CATEGORIES.forEach(function (c) {
       if (String(c.id).indexOf('beauty-') === 0) return;
       var active = (state.cat === c.id && !state.sub) ? ' is-active' : '';
-      // 管理模式：去掉 × 角标，改为左滑分类露出「删除」按钮
-      var delBtn = state.manageMode ? '<button class="chip-del-btn" data-act="del-cat" data-cat="' + c.id + '">删除</button>' : '';
-      html += '<div class="chip-swipe" data-cat="' + c.id + '">' +
-        '<button class="chip' + active + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '左滑显示删除' : '双击修改名称，长按拖拽排序') + '">' +
-          icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>' +
-        delBtn +
-      '</div>';
+      var managing = state.manageMode ? ' is-managing' : '';
+      html += '<button class="chip' + active + managing + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '长按删除，双击改名' : '双击修改名称，长按拖拽排序') + '">' +
+        icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
     });
     el.cats.innerHTML = html;
     renderSubs();
@@ -219,17 +215,7 @@
     input.addEventListener('blur', function () { commit(true); });
   }
 
-  /* 左滑删除：收起单个 / 全部已展开的分类 */
-  function closeSwipe(sw) {
-    if (!sw) return;
-    sw.classList.remove('is-open');
-    var ch = sw.querySelector('.chip');
-    if (ch) { ch.style.transition = ''; ch.style.transform = ''; }
-  }
-  function closeAllSwipe(rail) {
-    if (!rail) return;
-    rail.querySelectorAll('.chip-swipe.is-open').forEach(function (sw) { closeSwipe(sw); });
-  }
+  /* 删除分类（管理模式长按触发） */
   function deleteCategoryById(id) {
     if (state.cat === id) state.cat = 'all';
     // 先移除分类定义，再批量改单品归属。bulkPatch 的 emit 会触发一次完整渲染，
@@ -312,22 +298,7 @@
       if (state.railDragged) { state.railDragged = false; return; }
       // 编辑分类名时，点击输入框/确定按钮不触发筛选或删除
       if (e.target.closest('.chip.is-editing')) return;
-
-      // 左滑展开后的「删除」按钮
-      var delBtn = e.target.closest('[data-act="del-cat"]');
-      if (delBtn) {
-        e.stopPropagation();
-        var sw = delBtn.closest('.chip-swipe');
-        var id = sw && sw.dataset.cat;
-        if (!id || id === 'all') return;
-        deleteCategoryById(id);
-        return;
-      }
-
-      // 点击已展开（左滑露出删除键）的分类：收起，不触发筛选
-      var openSw = e.target.closest('.chip-swipe.is-open');
-      if (openSw) { closeSwipe(openSw); return; }
-
+      // 管理模式下点击分类：不选中（再点一次「管理」可退出管理模式、恢复正常选择）
       if (state.manageMode) return;
       var b = e.target.closest('.chip');
       if (!b || b.id === 'btn-add-cat') return;
@@ -343,7 +314,6 @@
     }
 
     el.cats.addEventListener('dblclick', function (e) {
-      if (e.target.closest('.cat-del')) return;
       var b = e.target.closest('.chip');
       if (!b || !b.dataset.cat || b.dataset.cat === 'all') return;
       if (b.classList.contains('is-editing')) return;
@@ -393,8 +363,6 @@
       var MOVE_THRESHOLD = 10;
       var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
       var sort = { active: false, timer: null, chip: null, id: null, order: [], startX: 0, startY: 0, pointerId: null };
-      var DEL_W = 72; // 左滑露出的删除键宽度，需与 CSS .chip-del-btn 宽度一致
-      var swipe = { candidate: null, wrapper: null, startX: 0, startY: 0, mode: null, active: false, scrollStartLeft: 0 };
 
       function decay() {
         if (Math.abs(scroll.vel) < 0.5) { scroll.raf = null; return; }
@@ -440,8 +408,8 @@
         idx = Math.max(1, Math.min(idx, all.length)); // 0 是 "全部"，不允许插入到它前面
         all.splice(idx, 0, item);
         sort.order = all.slice(1);
-        // 即时更新 DOM 顺序，避免全量重绘导致滚动位置跳动（注意：每个分类现在包在 .chip-swipe 里）
-        var chips = Array.from(rail.querySelectorAll('.chip-swipe'));
+        // 即时更新 DOM 顺序，避免全量重绘导致滚动位置跳动
+        var chips = Array.from(rail.querySelectorAll('.chip[data-cat]'));
         var map = {};
         chips.forEach(function (ch) { map[ch.dataset.cat || 'all'] = ch; });
         all.forEach(function (c) {
@@ -454,42 +422,39 @@
         state.railDragged = false;
         sort.startX = e.clientX; sort.startY = e.clientY;
 
-        // 左滑删除手势初始化（仅管理模式下生效）
-        var downChip = e.target.closest('.chip[data-cat]');
-        swipe.candidate = downChip;
-        swipe.wrapper = downChip ? downChip.closest('.chip-swipe') : null;
-        swipe.startX = e.clientX; swipe.startY = e.clientY;
-        swipe.mode = null; swipe.active = false;
-        swipe.scrollStartLeft = rail.scrollLeft;
-
-        // 管理模式下不启用长按排序，但横向滚动仍然可用
-        if (!state.manageMode) {
-          var chip = e.target.closest('.chip[data-cat]');
-          if (chip && chip.dataset.cat !== 'all') {
-            sort.id = chip.dataset.cat; sort.chip = chip; sort.pointerId = e.pointerId;
+        // 管理模式下：长按某个分类 → 删除
+        if (state.manageMode) {
+          var dChip = e.target.closest('.chip[data-cat]');
+          if (dChip && dChip.dataset.cat !== 'all' && !dChip.classList.contains('is-editing')) {
             clearLongPress();
             sort.timer = setTimeout(function () {
-              // 进入排序模式
-              sort.active = true;
-              sort.order = CL.catalog.CATEGORIES.slice();
-              rail.classList.add('is-sorting');
-              chip.classList.add('is-dragging');
-              try { rail.setPointerCapture(e.pointerId); } catch (err) {}
-              CL.ui.toast('拖动调整分类顺序', 1200);
-            }, LONG_PRESS);
+              deleteCategoryById(dChip.dataset.cat);
+            }, 550);
           }
-        } else {
-          // 管理模式：长按分类标题进入改名（手指滑动则取消，避免与滚动冲突）
-          var mchip = e.target.closest('.chip[data-cat]');
-          if (mchip && mchip.dataset.cat !== 'all' && !e.target.closest('.cat-del') && !mchip.classList.contains('is-editing')) {
-            clearLongPress();
-            sort.timer = setTimeout(function () {
-              startRename(mchip);
-            }, 450);
-          }
+          // 管理模式同样允许横向滚动
+          scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
+          scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
+          rail.style.cursor = 'grabbing';
+          if (scroll.raf) { cancelAnimationFrame(scroll.raf); scroll.raf = null; }
+          return;
         }
 
-        // 横向滚动检测（管理模式下同样启用）
+        // 非管理模式：长按进入拖拽排序
+        var chip = e.target.closest('.chip[data-cat]');
+        if (chip && chip.dataset.cat !== 'all') {
+          sort.id = chip.dataset.cat; sort.chip = chip; sort.pointerId = e.pointerId;
+          clearLongPress();
+          sort.timer = setTimeout(function () {
+            sort.active = true;
+            sort.order = CL.catalog.CATEGORIES.slice();
+            rail.classList.add('is-sorting');
+            chip.classList.add('is-dragging');
+            try { rail.setPointerCapture(e.pointerId); } catch (err) {}
+            CL.ui.toast('拖动调整分类顺序', 1200);
+          }, LONG_PRESS);
+        }
+
+        // 横向滚动检测（两种模式下都启用）
         scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
         scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
         rail.style.cursor = 'grabbing';
@@ -506,39 +471,16 @@
           reorder(sort.id, idx);
           return;
         }
-        var gdx = e.clientX - swipe.startX;
-        var gdy = e.clientY - swipe.startY;
-        if (!swipe.mode) {
-          if (Math.abs(gdx) <= MOVE_THRESHOLD && Math.abs(gdy) <= MOVE_THRESHOLD) return; // 阈值内，先不动
-          // 锁定手势方向：管理模式下向左滑 → 露出删除；其余 → 轨道横向滚动
-          if (state.manageMode && gdx < 0 && Math.abs(gdx) > Math.abs(gdy) && swipe.candidate && !swipe.candidate.classList.contains('is-editing')) {
-            swipe.mode = 'delete';
-            swipe.active = true;
-            state.railDragged = true;
-            clearLongPress();
-            closeAllSwipe(rail); // 先收起其它已展开项
-          } else {
-            swipe.mode = 'scroll';
-          }
-        }
-        if (swipe.mode === 'delete') {
-          var chipEl = swipe.candidate;
-          var t = Math.min(0, Math.max(-DEL_W, gdx));
-          chipEl.style.transition = 'none';
-          chipEl.style.transform = 'translateX(' + t + 'px)';
-          if (gdx < -DEL_W) rail.scrollLeft = swipe.scrollStartLeft - gdx - DEL_W; // 继续左滑则顺带滚动轨道
-          return;
-        }
-        // scroll 模式：沿用原有轨道横向滚动
         if (!scroll.isDown) return;
         var dx = e.clientX - sort.startX;
         var dy = e.clientY - sort.startY;
-        if (Math.abs(dx) > MOVE_THRESHOLD) state.railDragged = true; // 拖动过，松手后抑制 click
-        if (sort.timer && (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD)) {
-          clearLongPress(); // 手指滑动则取消长按
+        // 手指滑动则取消长按（删除 / 排序）
+        if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
+          clearLongPress();
+          state.railDragged = true; // 拖动过，松手后抑制 click 误触
         }
-        dx = scroll.startX - e.clientX;
-        rail.scrollLeft = scroll.scrollLeft + dx;
+        var sdx = scroll.startX - e.clientX;
+        rail.scrollLeft = scroll.scrollLeft + sdx;
         var now = Date.now();
         scroll.vel = (rail.scrollLeft - scroll.lastSL) / (now - scroll.lastT || 1) * 16 || 0;
         scroll.lastSL = rail.scrollLeft; scroll.lastT = now;
@@ -547,22 +489,7 @@
       rail.addEventListener('pointerup', function (e) {
         clearLongPress();
         if (sort.active) { commitSort(); return; }
-        if (swipe.mode === 'delete') {
-          var chipEl = swipe.candidate;
-          var gdx = e.clientX - swipe.startX;
-          var open = gdx <= -DEL_W * 0.4; // 滑过 40% 即展开，否则回弹
-          chipEl.style.transition = '';
-          if (open) {
-            chipEl.style.transform = 'translateX(-' + DEL_W + 'px)';
-            if (swipe.wrapper) swipe.wrapper.classList.add('is-open');
-          } else {
-            chipEl.style.transform = '';
-            if (swipe.wrapper) swipe.wrapper.classList.remove('is-open');
-          }
-          swipe.mode = null; swipe.active = false;
-          return; // railDragged 已为 true，抑制随后 click 误触
-        }
-        // 原有轨道滚动收尾
+        // 轨道滚动收尾
         scroll.isDown = false;
         try { rail.releasePointerCapture(e.pointerId); } catch (err) {}
         rail.style.cursor = '';
@@ -572,11 +499,6 @@
       rail.addEventListener('pointercancel', function (e) {
         clearLongPress();
         if (sort.active) exitSort();
-        if (swipe.mode === 'delete' && swipe.candidate) {
-          swipe.candidate.style.transition = ''; swipe.candidate.style.transform = '';
-          if (swipe.wrapper) swipe.wrapper.classList.remove('is-open');
-        }
-        swipe.mode = null; swipe.active = false;
         scroll.isDown = false; rail.style.cursor = '';
       });
       rail.addEventListener('pointerleave', function () {
