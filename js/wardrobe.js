@@ -22,14 +22,20 @@
 
   function renderCats() {
     // 在 wardrobe.js 内部自己计数，避免旧版 store.js 缓存中的 countBy() 不过滤 deletedAt
-    // 用户要求：衣橱底部分类板块只保留「全部」
     var counts = { all: 0 };
     CL.store.items().forEach(function (i) {
       if (String(i.category).indexOf('beauty-') === 0) return; // 彩妆护肤在独立视图管理
       counts.all++;
+      counts[i.category] = (counts[i.category] || 0) + 1;
     });
     var html = '<button class="chip ' + (state.cat === 'all' ? 'is-active' : '') + '" data-cat="all">' +
       icon(CL.catalog.ALL_ICON) + '全部<span class="n">' + (counts.all || 0) + '</span></button>';
+    CL.catalog.CATEGORIES.forEach(function (c) {
+      if (String(c.id).indexOf('beauty-') === 0) return;
+      var delBadge = state.manageMode ? '<span class="cat-del" data-act="del-cat" title="删除分类">×</span>' : '';
+      html += '<button class="chip ' + (state.cat === c.id && !state.sub ? 'is-active' : '') + (state.manageMode ? ' is-managing' : '') + '" data-cat="' + c.id + '" title="' + (state.manageMode ? '点击 × 删除分类' : '双击修改名称，长按拖拽排序') + '">' +
+        delBadge + icon(c.icon) + '<span class="chip-name">' + esc(c.name) + '</span><span class="n">' + (counts[c.id] || 0) + '</span></button>';
+    });
     el.cats.innerHTML = html;
     renderSubs();
   }
@@ -131,7 +137,7 @@
     };
   }
 
-  function renderSubPicker(box, catId, activeSub) {
+  function renderSubPicker(box, catId, activeSub, onPick) {
     var subs = CL.catalog.subsOf(catId);
     if (!subs.length) { box.innerHTML = '<span class="sub-empty">该类目暂无细分</span>'; return; }
     box.innerHTML = subs.map(function (s) {
@@ -142,7 +148,8 @@
       if (!b) return;
       box.querySelectorAll('.sub-opt').forEach(function (x) { x.classList.remove('is-active'); });
       b.classList.add('is-active');
-      state.editingSub = b.dataset.sub;
+      if (typeof onPick === 'function') onPick(b.dataset.sub);
+      else state.editingSub = b.dataset.sub;
     };
   }
 
@@ -594,5 +601,5 @@
     render();
   }
 
-  CL.wardrobe = { init: init, render: render, setCat: setCat, openItem: openDetail, renderCatPicker: renderCatPicker, icon: icon, esc: esc };
+  CL.wardrobe = { init: init, render: render, setCat: setCat, openItem: openDetail, renderCatPicker: renderCatPicker, renderSubPicker: renderSubPicker, icon: icon, esc: esc };
 })(window);

@@ -84,14 +84,15 @@
   /* ---------------- 导入流程 ---------------- */
 
   var imp = {
-    queue: [], idx: 0, file: null, result: null, cat: 'top', tol: 0.5, keep: false, seq: 0,
-    nameEdited: false, catPicked: false, previewUrl: null, selImgUrl: null, imgReady: false,
+    queue: [], idx: 0, file: null, result: null, cat: 'top', sub: null, tol: 0.5, keep: false, seq: 0,
+    nameEdited: false, catPicked: false, subPicked: false, previewUrl: null, selImgUrl: null, imgReady: false,
     strokes: [], drawing: false, cur: null, brush: 'fg', brushR: 0.06, sel: null
   };
 
   function resetImport() {
     imp.queue = []; imp.idx = 0; imp.file = null; imp.result = null; imp.seq++;
     imp.strokes = []; imp.drawing = false; imp.cur = null; imp.imgReady = false; imp.sel = null;
+    imp.cat = 'top'; imp.sub = null; imp.catPicked = false; imp.subPicked = false;
     if (imp.previewUrl) { URL.revokeObjectURL(imp.previewUrl); imp.previewUrl = null; }
     if (imp.selImgUrl) { URL.revokeObjectURL(imp.selImgUrl); imp.selImgUrl = null; }
   }
@@ -112,8 +113,8 @@
       return;
     }
     imp.file = imp.queue[imp.idx];
-    imp.nameEdited = false; imp.catPicked = false;
-    imp.tol = 0.5; imp.keep = false; imp.result = null;
+    imp.nameEdited = false; imp.catPicked = false; imp.subPicked = false;
+    imp.tol = 0.5; imp.keep = false; imp.result = null; imp.sub = null;
     imp.strokes = []; imp.drawing = false; imp.cur = null; imp.imgReady = false; imp.sel = null;
     imp.brush = 'fg'; imp.brushR = 0.06;
     $('tol-range').value = 50; $('keep-original').checked = false;
@@ -301,9 +302,15 @@
         $('auto-tag').textContent = imp.catPicked ? '' :
           '自动识别 · ' + (g.confidence > 0.66 ? '较有把握' : '不太确定，请确认');
         CL.wardrobe.renderCatPicker($('cat-picker'), imp.cat, function (c) {
-          imp.cat = c; imp.catPicked = true;
+          imp.cat = c; imp.catPicked = true; imp.sub = null; imp.subPicked = false;
           $('auto-tag').textContent = '';
+          CL.wardrobe.renderSubPicker($('sub-picker'), c, null, function (s) {
+            imp.sub = s; imp.subPicked = true;
+          });
           if (!imp.nameEdited) $('item-name').value = autoName();
+        });
+        CL.wardrobe.renderSubPicker($('sub-picker'), imp.cat, imp.sub, function (s) {
+          imp.sub = s; imp.subPicked = true;
         });
         renderSwatches();
         if (!imp.nameEdited) $('item-name').value = autoName();
@@ -337,6 +344,7 @@
         return CL.store.addItem({
           name: $('item-name').value.trim() || autoName(),
           category: imp.cat,
+          sub: imp.sub,
           location: loc,
           img: urls[0] || urls[1],          // dataURL 字符串（主图，稳定存储）
           imgFull: urls[0] || urls[1],      // dataURL 字符串（大图）
