@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=59">
+<link rel="stylesheet" href="css/style.css?v=60">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -21,6 +21,10 @@
 <!-- 未来如接入浏览器 AI 模型，可在此添加 import map -->
 </head>
 <body>
+
+<div id="splash" class="splash" aria-hidden="true">
+  <img class="splash-img" src="assets/princess_poster.jpg" alt="想要成为公主，先要相信自己就是公主">
+</div>
 
 <header class="topbar">
   <div class="brand">
@@ -586,6 +590,20 @@
       navigator.serviceWorker.register('sw.js').catch(function () { /* 非安全上下文（如 HTTP 局域网）下静默忽略 */ });
     });
   }
+
+  /* 启动页淡出：页面 load 后 350ms 淡出，2.6s 兜底强制隐藏（防止资源异常一直盖屏） */
+  (function () {
+    var done = false;
+    function hideSplash() {
+      if (done) return; done = true;
+      var s = document.getElementById('splash');
+      if (!s) return;
+      s.classList.add('hide');
+      setTimeout(function () { s.style.display = 'none'; }, 650);
+    }
+    window.addEventListener('load', function () { setTimeout(hideSplash, 350); });
+    setTimeout(hideSplash, 2600);
+  })();
 </script>
 </body>
 </html>

@@ -1183,5 +1183,21 @@ button{cursor:pointer;border:none;background:none}
   .picker-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
 }
 
+/* ============ 启动页 splash ============ */
+.splash{
+  position:fixed;inset:0;z-index:99999;
+  display:flex;align-items:center;justify-content:center;
+  background:#1b211a;            /* 深绿灰底，衬托金粉公主海报 */
+  opacity:1;transition:opacity .6s ease;
+  pointer-events:none;           /* 淡出动画期间不拦截操作 */
+}
+.splash.hide{opacity:0}
+.splash-img{
+  max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;
+  animation:spIn .6s ease both;
+}
+@keyframes spIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+
 
 
