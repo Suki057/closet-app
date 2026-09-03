@@ -110,7 +110,7 @@ button{cursor:pointer;border:none;background:none}
 }
 .item-shot img{
   display:block;max-width:100%;width:auto;height:auto;
-  max-height:32vh;object-fit:contain;
+  max-height:26vh;object-fit:contain;
 }
 .item-form{display:flex;flex-direction:column;gap:14px}
 

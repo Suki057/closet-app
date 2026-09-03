@@ -70,6 +70,8 @@
     if (!state.loc) return []; // 未选择地点时衣橱网格为空
     var list = CL.store.itemsOf(state.cat, state.sub);
     list = list.filter(function (i) { return i.location === state.loc; });
+    // 与彩妆护肤严格隔离：衣橱只显示非 beauty- 类目（全部视图下不会混入彩妆单品）
+    list = list.filter(function (i) { return String(i.category).indexOf('beauty-') !== 0; });
     if (state.favOnly) list = list.filter(function (i) { return i.favorite; });
     var q = state.q.trim().toLowerCase();
     if (q) {
@@ -291,6 +293,7 @@
     if (!el.placeHome) return;
     var counts = { home: 0, residence: 0 };
     CL.store.items().forEach(function (i) {
+      if (String(i.category).indexOf('beauty-') === 0) return; // 只统计衣橱自己的单品，不混入彩妆护肤
       if (i.location === 'home') counts.home++;
       else if (i.location === 'residence') counts.residence++;
     });
