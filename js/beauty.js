@@ -382,13 +382,16 @@
       }
     });
 
-    // 底部导航：横向滚动 + 管理模式长按删除分类
+    // 底部导航：横向滚动 + 管理模式长按删除分类 + 普通模式长按拖动排序
     (function setupRail(rail) {
       if (!rail) return;
-      var LONG_PRESS = 550;
+      var LONG_PRESS = 550;        // 管理模式：长按删除
+      var DRAG_PRESS = 480;        // 普通模式：长按进入拖动排序
       var MOVE_THRESHOLD = 10;
       var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
       var sort = { timer: null, chip: null };
+      // 拖动排序状态
+      var reorder = { timer: null, chip: null, startX: 0, startY: 0, clone: null, offX: 0, offY: 0, active: false };
 
       function decay() {
         if (Math.abs(scroll.vel) < 0.5) { scroll.raf = null; return; }
@@ -399,19 +402,87 @@
       function clearLongPress() {
         if (sort.timer) { clearTimeout(sort.timer); sort.timer = null; }
       }
+      function clearReorderTimer() {
+        if (reorder.timer) { clearTimeout(reorder.timer); reorder.timer = null; }
+      }
 
+      function positionClone(x, y) {
+        if (!reorder.clone) return;
+        reorder.clone.style.left = (x - reorder.offX) + 'px';
+        reorder.clone.style.top = (y - reorder.offY) + 'px';
+      }
+      function startReorder(chip, x, y) {
+        reorder.active = true;
+        reorder.chip = chip;
+        scroll.isDown = false; // 停止横向滚动
+        chip.classList.add('is-dragging');
+        var bar = rail.closest('.cat-bottom-bar');
+        if (bar) bar.classList.add('is-sorting');
+        rail.style.touchAction = 'none';
+        var r = chip.getBoundingClientRect();
+        var clone = chip.cloneNode(true);
+        clone.classList.add('cat-drag-ghost');
+        clone.style.width = r.width + 'px';
+        clone.style.height = r.height + 'px';
+        document.body.appendChild(clone);
+        reorder.clone = clone;
+        reorder.offX = x - r.left;
+        reorder.offY = y - r.top;
+        positionClone(x, y);
+        try { chip.setPointerCapture(e_pressId); } catch (err) {}
+      }
+      function onDragMove(x, y) {
+        positionClone(x, y);
+        reorder.clone.style.visibility = 'hidden';
+        var elc = document.elementFromPoint(x, y);
+        reorder.clone.style.visibility = '';
+        var target = elc && elc.closest ? elc.closest('.chip[data-cat]') : null;
+        if (!target || target === reorder.chip || target.dataset.cat === 'all') return;
+        var tr = target.getBoundingClientRect();
+        if (x > tr.left + tr.width / 2) target.parentNode.insertBefore(reorder.chip, target.nextSibling);
+        else target.parentNode.insertBefore(reorder.chip, target);
+      }
+      function endReorder() {
+        if (reorder.clone) { reorder.clone.remove(); reorder.clone = null; }
+        if (reorder.chip) reorder.chip.classList.remove('is-dragging');
+        var bar = rail.closest('.cat-bottom-bar');
+        if (bar) bar.classList.remove('is-sorting');
+        rail.style.touchAction = '';
+        var ids = Array.prototype.slice.call(rail.querySelectorAll('.chip[data-cat]'))
+          .map(function (c) { return c.dataset.cat; })
+          .filter(function (id) { return id && id !== 'all'; });
+        // 保留衣橱类目既有顺序，仅重排彩妆护肤分类
+        var allIds = CL.catalog.ids().filter(function (id) { return String(id).indexOf('beauty-') !== 0; }).concat(ids);
+        CL.catalog.setCategoryOrder(allIds);
+        state.railDragged = true; // 抑制随后的 click 误触
+        renderCats();
+        CL.ui.toast('已保存分类顺序');
+        reorder.active = false; reorder.chip = null;
+      }
+
+      var e_pressId = null;
       rail.addEventListener('pointerdown', function (e) {
+        e_pressId = e.pointerId;
         state.railDragged = false;
-        // 管理模式下：长按某个分类 → 弹出确认框
+        var chip = e.target.closest('.chip[data-cat]');
+        // 管理模式下：长按某个分类 → 弹出删除确认框
         if (state.manageMode) {
-          var dChip = e.target.closest('.chip[data-cat]');
-          if (dChip && dChip.dataset.cat !== 'all' && !dChip.classList.contains('is-editing')) {
+          if (chip && chip.dataset.cat !== 'all' && !chip.classList.contains('is-editing')) {
             clearLongPress();
             sort.timer = setTimeout(function () {
-              if (dChip.classList.contains('is-editing')) return; // 正在改名则不删
-              confirmDeleteCategory(dChip.dataset.cat);
+              if (chip.classList.contains('is-editing')) return; // 正在改名则不删
+              confirmDeleteCategory(chip.dataset.cat);
             }, LONG_PRESS);
           }
+        } else if (chip && chip.dataset.cat !== 'all' && !chip.classList.contains('is-editing')) {
+          // 普通模式：长按某个分类 → 进入拖动排序
+          clearReorderTimer();
+          reorder.chip = chip; reorder.startX = e.clientX; reorder.startY = e.clientY;
+          reorder.timer = setTimeout(function () {
+            if (reorder.chip && !reorder.chip.classList.contains('is-editing')) {
+              startReorder(reorder.chip, reorder.startX, reorder.startY);
+            }
+          }, DRAG_PRESS);
         }
         // 横向滚动（两种模式都启用）
         scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
@@ -421,31 +492,39 @@
       });
 
       rail.addEventListener('pointermove', function (e) {
+        if (reorder.active) { onDragMove(e.clientX, e.clientY); try { e.preventDefault(); } catch (err) {} return; }
         if (!scroll.isDown) return;
         var dx = e.clientX - scroll.startX;
         var dy = e.clientY - scroll.startY;
         if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
           clearLongPress();
+          clearReorderTimer();
           state.railDragged = true; // 拖动过，松手后抑制 click 误触
         }
+        if (reorder.timer && Math.abs(dx) > MOVE_THRESHOLD) clearReorderTimer();
         rail.scrollLeft = scroll.scrollLeft + (e.clientX - scroll.startX);
         var now = Date.now();
         scroll.vel = (rail.scrollLeft - scroll.lastSL) / (now - scroll.lastT || 1) * 16 || 0;
         scroll.lastSL = rail.scrollLeft; scroll.lastT = now;
       });
 
-      rail.addEventListener('pointerup', function () {
+      function finishPress() {
         clearLongPress();
+        clearReorderTimer();
+        if (reorder.active) endReorder();
         scroll.isDown = false; rail.style.cursor = '';
         if (scroll.raf) cancelAnimationFrame(scroll.raf);
         scroll.raf = requestAnimationFrame(decay);
-      });
+      }
+      rail.addEventListener('pointerup', finishPress);
       rail.addEventListener('pointercancel', function () {
         clearLongPress();
+        clearReorderTimer();
+        if (reorder.active) endReorder();
         scroll.isDown = false; rail.style.cursor = '';
       });
       rail.addEventListener('pointerleave', function () {
-        if (!sort.active) { scroll.isDown = false; rail.style.cursor = ''; }
+        if (!sort.active && !reorder.active) { scroll.isDown = false; rail.style.cursor = ''; }
       });
     })(el.cats);
 

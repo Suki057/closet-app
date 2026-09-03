@@ -97,23 +97,6 @@ button{cursor:pointer;border:none;background:none}
 .look-name,
 .item-body .field-label{font-family:var(--title-font)}
 
-/* 单品详情：图片限制尺寸 + 信息区可滚动，打开即完整平铺展示 */
-.item-body{
-  display:flex;flex-direction:column;gap:14px;
-  padding:18px 20px;
-  flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;
-}
-.item-shot{
-  width:100%;flex:none;border-radius:14px;overflow:hidden;
-  display:grid;place-items:center;background:var(--surface-2);
-  box-shadow:inset 0 0 0 1px var(--line);
-}
-.item-shot img{
-  display:block;max-width:100%;width:auto;height:auto;
-  max-height:26vh;object-fit:contain;
-}
-.item-form{display:flex;flex-direction:column;gap:14px}
-
 /* ---------------- topbar ---------------- */
 .topbar{
   position:sticky;top:0;z-index:60;
@@ -301,6 +284,15 @@ button{cursor:pointer;border:none;background:none}
 .cat-bottom-bar .chip{touch-action:pan-x;user-select:none;-webkit-user-select:none;position:relative}
 .cat-bottom-bar .sub-rail .sub-chip{position:relative}
 .cat-bottom-bar .sub-rail .sub-chip.is-managing{padding-left:24px}
+/* 长按拖拽排序时的浮动克隆体 */
+.cat-drag-ghost{
+  position:fixed;z-index:300;pointer-events:none;margin:0;
+  box-shadow:0 16px 34px rgba(60,66,54,.38),inset 0 0 0 1px rgba(255,255,255,.18);
+  transform:scale(1.06);opacity:.97;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;
+}
+.cat-drag-ghost .n{color:rgba(255,255,255,.65)}
 .cat-bottom-bar .sub-rail .cat-del{
   left:-5px;top:-5px;width:16px;height:16px;
   font-size:11px;line-height:16px;
@@ -775,13 +767,20 @@ button{cursor:pointer;border:none;background:none}
 .btn-block{width:100%;justify-content:center;margin-top:2px}
 .cutout-meta .btn-soft.btn-block{margin-top:4px}
 
-.item-body{display:grid;grid-template-columns:220px 1fr;gap:18px;padding:20px;overflow:auto}
+/* 单品详情：移动端默认纵向，图片限制高度，信息区可滚动完整展示 */
+.item-body{display:flex;flex-direction:column;gap:16px;padding:18px 20px;flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 .item-shot{
-  aspect-ratio:1/1;border-radius:14px;display:grid;place-items:center;padding:14px;
-  background:linear-gradient(180deg,#FBFCF9,#EEF1E8);box-shadow:inset 0 0 0 1px var(--line);
+  width:100%;flex:none;border-radius:14px;overflow:hidden;
+  display:grid;place-items:center;padding:12px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);
 }
-.item-shot img{max-width:100%;max-height:100%;object-fit:contain}
+.item-shot img{display:block;max-width:100%;width:auto;height:auto;max-height:22vh;object-fit:contain}
 .item-form{display:flex;flex-direction:column;gap:14px}
+/* 桌面端：左侧固定缩略图 + 右侧表单 */
+@media (min-width:681px){
+  .item-body{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start}
+  .item-shot{aspect-ratio:1/1}
+  .item-shot img{max-height:100%}
+}
 
 .settings-body{padding:20px;display:flex;flex-direction:column;gap:12px;overflow:auto}
 .settings-body .field{margin:0}
@@ -827,7 +826,6 @@ button{cursor:pointer;border:none;background:none}
   .grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
   .studio,.looks-grid,.looks-head{padding-left:14px;padding-right:14px}
   .search input{width:110px}
-  .item-body{grid-template-columns:1fr}
   .studio-cat-grid{grid-template-columns:repeat(2,1fr)}
   .modal-studio-picker{max-width:100%}
   .studio-picker-body{max-height:70vh}
@@ -1181,7 +1179,6 @@ button{cursor:pointer;border:none;background:none}
   .select-stage{padding:16px;gap:12px}
   .select-wrap img{max-height:36vh}
   .select-tools{gap:8px}
-  .item-body{grid-template-columns:1fr}
   .import-steps{font-size:12px}
   .hero-actions .btn,.hero-actions .btn-soft{flex:1 1 auto}
   .picker-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
