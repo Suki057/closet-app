@@ -36,8 +36,7 @@
   </div>
 
   <nav class="tabs" id="tabs">
-    <button class="tab is-active" data-view="home">首页</button>
-    <button class="tab" data-view="wardrobe">衣橱</button>
+    <button class="tab is-active" data-view="wardrobe">衣橱</button>
     <button class="tab" data-view="studio">搭配间</button>
     <button class="tab" data-view="looks">搭配集</button>
     <button class="tab" data-view="beauty">彩妆护肤</button>
@@ -57,40 +56,8 @@
 
 <main class="stage-root">
 
-  <!-- ============ 首页 ============ -->
-  <section class="view is-active" id="view-home">
-    <div class="home">
-
-      <!-- 最近导入 -->
-      <section class="home-section" id="home-recent-section">
-        <div class="home-section-head">
-          <h2><span class="sec-ico"><svg viewBox="0 0 64 64"><path d="M32 8 C34 26 38 30 56 32 C38 34 34 38 32 56 C30 38 26 34 8 32 C26 30 30 26 32 8 Z" fill="currentColor"/></svg></span>最近导入</h2>
-          <button class="link-btn" data-goto="wardrobe">查看衣橱 →</button>
-        </div>
-        <div class="grid" id="home-recent"></div>
-      </section>
-
-      <!-- 空状态 -->
-      <div class="empty home-empty" id="home-empty" hidden>
-        <button class="btn btn-primary home-empty-cta" data-action="add">添加单品</button>
-        <div class="empty-art">
-          <svg class="art" viewBox="0 0 120 120">
-            <path d="M60 34a8 8 0 0 1 8 8c0 3-2 5-5 6l-30 16c-3 1-5 4-5 7 0 5 4 8 9 8h48c5 0 9-3 9-8 0-3-2-6-5-7L57 48" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="60" cy="34" r="3.5" style="fill:#F4C24E;stroke:none"/>
-            <path d="M52 56 L48 66 L60 70 L72 66 L68 56 L65 50 L55 50 Z" style="fill:rgba(255,134,198,.22)"/>
-            <path d="M30 40 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z" style="fill:#FFE9A8;stroke:none"/>
-            <path d="M88 58 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" style="fill:#E9DCF5;stroke:none"/>
-          </svg>
-        </div>
-        <h3>衣橱从这里开始</h3>
-        <p>把衣服平铺在浅色背景上拍一张，导入后会自动抠出主体、识别类目，并出现在你的衣橱里。</p>
-      </div>
-
-    </div>
-  </section>
-
   <!-- ============ 衣橱 ============ -->
-  <section class="view" id="view-wardrobe">
+  <section class="view is-active" id="view-wardrobe">
     <div class="page-deco page-deco-wardrobe" aria-hidden="true">
       <svg class="pdeco pd-heel" viewBox="0 0 64 64"><path d="M5 41 C16 32 27 32 35 39 L44 41 L44 47 L35 45 C27 41 19 43 11 49 L9 49 C7 46 5 44 5 41 Z" fill="#E9DCF5"/><path d="M44 41 L49 60 L54 60 L49 41 Z" fill="#FFE9A8"/></svg>
       <svg class="pdeco pd-bow" viewBox="0 0 64 64"><path d="M32 32 L11 21 L11 43 Z" fill="#FFE9A8"/><path d="M32 32 L53 21 L53 43 Z" fill="#FFE9A8"/><circle cx="32" cy="32" r="6.5" fill="#F4C24E"/></svg>
@@ -597,13 +564,12 @@
 <script src="js/catalog.js?v=12"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=16"></script>
-<script src="js/wardrobe.js?v=32"></script>
+<script src="js/wardrobe.js?v=33"></script>
 <script src="js/studio.js?v=4"></script>
 <script src="js/looks.js?v=2"></script>
 <script src="js/beauty.js?v=4"></script>
-<script src="js/home.js?v=4"></script>
 <script src="js/trash.js?v=7"></script>
-<script src="js/app.js?v=16"></script>
+<script src="js/app.js?v=17"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

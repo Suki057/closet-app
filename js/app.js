@@ -552,7 +552,6 @@
       CL.studio.init();
       CL.looks.init();
       CL.beauty.init();
-      CL.home.init();
       CL.trash.init();
       applySettings();
       refreshStat();
