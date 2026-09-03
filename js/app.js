@@ -86,11 +86,11 @@
   var imp = {
     queue: [], idx: 0, file: null, result: null, cat: 'top', sub: null, tol: 0.5, keep: false, seq: 0,
     nameEdited: false, catPicked: false, subPicked: false, previewUrl: null, selImgUrl: null, imgReady: false,
-    strokes: [], drawing: false, cur: null, brush: 'fg', brushR: 0.06, sel: null
+    strokes: [], drawing: false, cur: null, brush: 'fg', brushR: 0.06, sel: null, slot: null
   };
 
   function resetImport() {
-    imp.queue = []; imp.idx = 0; imp.file = null; imp.result = null; imp.seq++;
+    imp.queue = []; imp.idx = 0; imp.file = null; imp.result = null; imp.seq++; imp.slot = null;
     imp.strokes = []; imp.drawing = false; imp.cur = null; imp.imgReady = false; imp.sel = null;
     imp.cat = 'top'; imp.sub = null; imp.catPicked = false; imp.subPicked = false;
     if (imp.previewUrl) { URL.revokeObjectURL(imp.previewUrl); imp.previewUrl = null; }
@@ -113,7 +113,7 @@
       return;
     }
     imp.file = imp.queue[imp.idx];
-    imp.nameEdited = false; imp.catPicked = false; imp.subPicked = false;
+    imp.nameEdited = false; imp.catPicked = false; imp.subPicked = false; imp.slot = null;
     imp.tol = 0.5; imp.keep = false; imp.result = null; imp.sub = null;
     imp.strokes = []; imp.drawing = false; imp.cur = null; imp.imgReady = false; imp.sel = null;
     imp.brush = 'fg'; imp.brushR = 0.06;
@@ -280,41 +280,22 @@
     }).join('') + (cs.length ? '<span class="swatch-name">' + CL.color.colorName(cs[0].hex) + '</span>' : '');
   }
 
+  /* 当前所在板块：彩妆护肤 or 衣橱（决定单品归属，两个板块互不打乱） */
+  function currentSlot() {
+    var av = document.querySelector('.tab.is-active');
+    return (av && av.dataset.view === 'beauty') ? 'beauty' : 'top';
+  }
+
   function process() {
     var seq = ++imp.seq;
+    imp.slot = currentSlot();
     $('cutout-loading').hidden = false;
     CL.segment.cutout(imp.file, { tolerance: imp.tol, apiKey: settings.apiKey, keepOriginal: imp.keep, region: imp.sel || undefined })
       .then(function (res) {
         if (seq !== imp.seq) return;
         imp.result = res;
-        if (imp.previewUrl) URL.revokeObjectURL(imp.previewUrl);
-        imp.previewUrl = URL.createObjectURL(res.blob);
-        $('cutout-img').src = imp.previewUrl;
-        $('cutout-loading').hidden = true;
-
-        var activeView = document.querySelector('.tab.is-active') && document.querySelector('.tab.is-active').dataset.view;
-        if (activeView === 'beauty') {
-          if (!imp.catPicked) imp.cat = 'beauty-makeup';
-        } else {
-          var g = CL.catalog.guess(res.feat);
-          if (!imp.catPicked) imp.cat = g.category;
-        }
-        $('auto-tag').textContent = imp.catPicked ? '' :
-          '自动识别 · ' + (g.confidence > 0.66 ? '较有把握' : '不太确定，请确认');
-        CL.wardrobe.renderCatPicker($('cat-picker'), imp.cat, function (c) {
-          imp.cat = c; imp.catPicked = true; imp.sub = null; imp.subPicked = false;
-          $('auto-tag').textContent = '';
-          CL.wardrobe.renderSubPicker($('sub-picker'), c, null, function (s) {
-            imp.sub = s; imp.subPicked = true;
-          });
-          if (!imp.nameEdited) $('item-name').value = autoName();
-        });
-        CL.wardrobe.renderSubPicker($('sub-picker'), imp.cat, imp.sub, function (s) {
-          imp.sub = s; imp.subPicked = true;
-        });
-        renderSwatches();
-        if (!imp.nameEdited) $('item-name').value = autoName();
-        if (res.note) ui.toast(res.note, 3200);
+        showStep('cut');
+        renderResultUI();
       })
       .catch(function (e) {
         if (seq !== imp.seq) return;
@@ -327,6 +308,75 @@
         }
         ui.toast('处理失败：' + (e && e.message ? e.message : '未知错误'));
       });
+  }
+
+  /* 直接使用整张原图（不抠背景）：生成与抠图结果同构的 result，直接进入编辑保存步骤 */
+  function useOriginal() {
+    if (!imp.selImgUrl) return;
+    imp.slot = currentSlot();
+    var img = new Image();
+    img.onload = function () {
+      imp.result = {
+        blob: imp.file,
+        thumbBlob: imp.file,
+        width: img.naturalWidth || 0,
+        height: img.naturalHeight || 0,
+        colors: [],
+        feat: null
+      };
+      showStep('cut');
+      renderResultUI();
+    };
+    img.onerror = function () { ui.toast('图片读取失败，请重试'); };
+    img.src = imp.selImgUrl;
+  }
+
+  /* 抠图结果 / 直接使用 后，渲染「编辑保存」步骤：
+     类目选择器按当前板块筛选；名称默认空白；保存按钮文案随板块变化 */
+  function renderResultUI() {
+    var res = imp.result;
+    if (imp.previewUrl) URL.revokeObjectURL(imp.previewUrl);
+    imp.previewUrl = URL.createObjectURL(res.blob);
+    $('cutout-img').src = imp.previewUrl;
+    $('cutout-loading').hidden = true;
+
+    var slot = imp.slot || currentSlot();
+    var guessed = null;
+    if (!imp.catPicked) {
+      if (slot === 'beauty') {
+        imp.cat = 'beauty-makeup';
+      } else if (res.feat) {
+        guessed = CL.catalog.guess(res.feat);
+        imp.cat = guessed.category || 'top';
+      } else {
+        imp.cat = 'top';
+      }
+    }
+
+    if (slot === 'beauty') {
+      $('auto-tag').textContent = imp.catPicked ? '' : '已归入彩妆护肤';
+    } else if (guessed) {
+      $('auto-tag').textContent = imp.catPicked ? '' :
+        (guessed.confidence > 0.66 ? '自动识别 · 较有把握' : '不太确定，请确认');
+    } else {
+      $('auto-tag').textContent = '';
+    }
+
+    CL.wardrobe.renderCatPicker($('cat-picker'), imp.cat, function (c) {
+      imp.cat = c; imp.catPicked = true; imp.sub = null; imp.subPicked = false;
+      $('auto-tag').textContent = '';
+      CL.wardrobe.renderSubPicker($('sub-picker'), c, null, function (s) {
+        imp.sub = s; imp.subPicked = true;
+      });
+    }, slot);
+    CL.wardrobe.renderSubPicker($('sub-picker'), imp.cat, imp.sub, function (s) {
+      imp.sub = s; imp.subPicked = true;
+    });
+
+    renderSwatches();
+    $('item-name').value = '';   // 名称默认空白，需要重新输入
+    $('btn-save-item').textContent = (slot === 'beauty') ? '存入彩妆护肤' : '存入衣橱';
+    if (res.note) ui.toast(res.note, 3200);
   }
 
   function askLocation() {
@@ -426,8 +476,11 @@
     $('brush-size').addEventListener('input', function (e) { imp.brushR = Number(e.target.value) / 100; });
     $('btn-undo-sel').addEventListener('click', undoStroke);
     $('btn-clear-sel').addEventListener('click', clearStrokes);
-    $('btn-do-cut').addEventListener('click', doCut);
-    $('btn-use-all').addEventListener('click', useAll);
+    $('btn-go-cut').addEventListener('click', function () {
+      if (imp.strokes.some(function (s) { return s.c === 'fg' && s.pts.length; })) doCut();
+      else useAll();
+    });
+    $('btn-use-direct').addEventListener('click', useOriginal);
     $('btn-reselect').addEventListener('click', reselect);
     window.addEventListener('resize', function () {
       if (!$('import-modal').hidden && !$('select-stage').hidden) { sizeOverlay(); renderStrokes(); }

@@ -208,6 +208,9 @@
   }
   function openMenu(id) {
     state.menuItemId = id;
+    var it = CL.store.getItem(id);
+    var moveBtn = $('beauty-menu-move');
+    if (moveBtn && it) moveBtn.textContent = it.location === 'home' ? '移到现居地' : '移到家里';
     CL.ui.openModal('beauty-menu-modal');
     var card = $('beauty-menu-modal').querySelector('.modal-card');
     if (card) {
@@ -366,6 +369,12 @@
       CL.ui.closeModal('beauty-menu-modal');
       if (act === 'edit') {
         CL.wardrobe.openItem(id);
+      } else if (act === 'move') {
+        var it = CL.store.getItem(id);
+        var to = (it && it.location === 'home') ? 'residence' : 'home';
+        CL.store.updateItem(id, { location: to }).then(function () {
+          CL.ui.toast('已移到' + (to === 'home' ? '家里' : '现居地'));
+        });
       } else if (act === 'trash') {
         CL.store.deleteItem(id).then(function () {
           CL.ui.toast('已移入回收站（可在回收站恢复）');

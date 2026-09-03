@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=62">
+<link rel="stylesheet" href="css/style.css?v=63">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -337,8 +337,8 @@
     </header>
 
     <div class="import-steps" id="import-steps">
-      <span class="step is-active" data-step="select">① 涂抹主体</span>
-      <span class="step" data-step="cut">② 抠图预览</span>
+      <span class="step is-active" data-step="select">① 选择图片</span>
+      <span class="step" data-step="cut">② 编辑保存</span>
     </div>
 
     <!-- 步骤一：涂抹选择 -->
@@ -348,7 +348,7 @@
         <canvas id="sel-canvas"></canvas>
       </div>
       <div class="select-tools">
-        <p class="sel-hint" id="sel-hint">用<b class="dot fg"></b><b>主体笔刷</b>在衣服上涂抹大概位置（一两笔即可），软件会自动锁定主体并去掉背景，<b>不需要涂抹背景</b>。不满意可撤销 / 清除后重涂。</p>
+        <p class="sel-hint" id="sel-hint">默认会<b>直接使用整张图</b>。想要干净抠掉背景时，用<b class="dot fg"></b><b>主体笔刷</b>在衣服上涂抹大概位置（一两笔即可），再点左下角「去抠图」；不涂直接点「去抠图」也会自动抠整图。</p>
         <div class="brush-bar">
           <div class="brush-tools">
             <button class="brush-btn is-active" id="brush-fg" type="button">主体笔刷（保留）</button>
@@ -366,8 +366,10 @@
         <div class="sel-actions">
           <button class="btn btn-ghost btn-sm" id="btn-undo-sel" type="button">撤销</button>
           <button class="btn btn-ghost btn-sm" id="btn-clear-sel" type="button">清除</button>
-          <button class="btn btn-soft btn-sm" id="btn-use-all" type="button">整图自动抠图</button>
-          <button class="btn btn-primary btn-sm" id="btn-do-cut" type="button">开始抠图</button>
+        </div>
+        <div class="select-choice">
+          <button class="btn btn-soft" id="btn-go-cut" type="button">去抠图</button>
+          <button class="btn btn-primary" id="btn-use-direct" type="button">直接使用</button>
         </div>
       </div>
     </div>
@@ -499,6 +501,7 @@
     </header>
     <div class="modal-body card-menu-body">
       <button class="card-menu-btn" data-act="edit">编辑</button>
+      <button class="card-menu-btn" data-act="move" id="beauty-menu-move">移到现居地</button>
       <button class="card-menu-btn danger" data-act="trash">删除</button>
     </div>
   </div>
@@ -594,13 +597,13 @@
 <script src="js/catalog.js?v=12"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=16"></script>
-<script src="js/wardrobe.js?v=31"></script>
+<script src="js/wardrobe.js?v=32"></script>
 <script src="js/studio.js?v=4"></script>
 <script src="js/looks.js?v=2"></script>
-<script src="js/beauty.js?v=3"></script>
+<script src="js/beauty.js?v=4"></script>
 <script src="js/home.js?v=4"></script>
 <script src="js/trash.js?v=7"></script>
-<script src="js/app.js?v=15"></script>
+<script src="js/app.js?v=16"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

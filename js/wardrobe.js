@@ -134,17 +134,22 @@
     $('detail-tags').value = (it.tags || []).join(', ');
     state.editingCat = it.category;
     state.editingSub = it.sub || null;
+    var slot = (String(it.category).indexOf('beauty-') === 0) ? 'beauty' : 'top';
     renderCatPicker($('detail-cat'), it.category, function (c) {
       state.editingCat = c;
       state.editingSub = null;
       renderSubPicker($('detail-sub'), c, null);
-    });
+    }, slot);
     renderSubPicker($('detail-sub'), it.category, it.sub || null);
     CL.ui.openModal('item-modal');
   }
 
-  function renderCatPicker(box, active, onPick) {
-    box.innerHTML = CL.catalog.CATEGORIES.map(function (c) {
+  function renderCatPicker(box, active, onPick, slot) {
+    var cats = CL.catalog.CATEGORIES;
+    // 按板块隔离：衣橱只列非 beauty- 类目，彩妆护肤只列 beauty- 类目
+    if (slot === 'beauty') cats = cats.filter(function (c) { return String(c.id).indexOf('beauty-') === 0; });
+    else if (slot === 'top') cats = cats.filter(function (c) { return String(c.id).indexOf('beauty-') !== 0; });
+    box.innerHTML = cats.map(function (c) {
       return '<button class="cat-opt' + (c.id === active ? ' is-active' : '') + '" data-cat="' + c.id + '">' +
         icon(c.icon) + esc(c.name) + '</button>';
     }).join('');
