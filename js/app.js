@@ -16,6 +16,37 @@
     });
   }
 
+  /* 把任意图源（dataURL 或 Blob）降级成真正的小缩略图 dataURL，避免卡片用全尺寸原图导致卡顿。
+     maxW 目标最大宽（默认 480px），quality JPEG 压缩质量。失败返回 null。 */
+  function makeThumb(src, maxW, quality) {
+    maxW = maxW || 480; quality = (quality == null) ? 0.72 : quality;
+    return new Promise(function (resolve) {
+      if (!src) return resolve(null);
+      var img = new Image();
+      var url = (typeof src === 'string') ? src : URL.createObjectURL(src);
+      var done = false;
+      img.onload = function () {
+        if (done) return; done = true;
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) { if (url !== src) URL.revokeObjectURL(url); return resolve(null); }
+          var scale = Math.min(1, maxW / w);
+          var tw = Math.max(1, Math.round(w * scale)), th = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = tw; canvas.height = th;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, tw, th);
+          var out = canvas.toDataURL('image/jpeg', quality);
+          if (url !== src) URL.revokeObjectURL(url);
+          resolve(out);
+        } catch (e) { if (url !== src) URL.revokeObjectURL(url); resolve(null); }
+      };
+      img.onerror = function () { if (!done) { done = true; if (url !== src) URL.revokeObjectURL(url); resolve(null); } };
+      img.src = url;
+    });
+  }
+  CL.makeThumb = makeThumb;
+
   /* ---------------- 通用 UI ---------------- */
 
   var toastTimer = null;
@@ -533,18 +564,22 @@
     var res = imp.result;
     Promise.all([blobToDataURL(res.blob), blobToDataURL(res.thumbBlob || res.blob)])
       .then(function (urls) {
-        return CL.store.addItem({
-          name: $('item-name').value.trim() || autoName(),
-          category: imp.cat,
-          sub: imp.sub,
-          location: loc,
-          img: urls[0] || urls[1],          // dataURL 字符串（主图，稳定存储）
-          imgFull: urls[0] || urls[1],      // dataURL 字符串（大图）
-          width: res.width,
-          height: res.height,
-          color: res.colors[0] ? res.colors[0].hex : '#C9C2B8',
-          colors: res.colors.map(function (c) { return c.hex; }),
-          tags: tags
+        var full = urls[0] || urls[1];   // 全尺寸原图（详情/搭配用）
+        return makeThumb(full, 480, 0.72).then(function (thumb) {
+          return CL.store.addItem({
+            name: $('item-name').value.trim() || autoName(),
+            category: imp.cat,
+            sub: imp.sub,
+            location: loc,
+            img: thumb || full,          // 真缩略图（卡片网格用，体积大幅减小）
+            imgFull: full,               // 全尺寸大图（详情/搭配用，画质不变）
+            width: res.width,
+            height: res.height,
+            color: res.colors[0] ? res.colors[0].hex : '#C9C2B8',
+            colors: res.colors.map(function (c) { return c.hex; }),
+            tags: tags,
+            thumbV: 1                     // 标记已生成真缩略图，避免被迁移重复处理
+          });
         });
       })
       .then(function () {
