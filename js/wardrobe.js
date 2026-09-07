@@ -480,6 +480,19 @@
         state.railDragged = false;
         sort.startX = e.clientX; sort.startY = e.clientY;
 
+        // 总分类（全部）长按 → 弹窗内排序（两种模式通用）
+        var chip = e.target.closest('.chip[data-cat]');
+        if (chip && chip.dataset.cat === 'all') {
+          clearLongPress();
+          sort.timer = setTimeout(function () { CL.openCategoryReorder('top'); }, LONG_PRESS);
+          // 仍允许横向滚动
+          scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
+          scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
+          rail.style.cursor = 'grabbing';
+          if (scroll.raf) { cancelAnimationFrame(scroll.raf); scroll.raf = null; }
+          return;
+        }
+
         // 管理模式下：长按某个分类 → 弹出确认框
         if (state.manageMode) {
           var dChip = e.target.closest('.chip[data-cat]');

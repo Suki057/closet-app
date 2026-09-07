@@ -666,6 +666,30 @@ button{cursor:pointer;border:none;background:none}
 .modal-foot.spread{justify-content:space-between}
 .foot-right{display:flex;gap:8px}
 
+/* 分类顺序弹窗排序 */
+.reorder-body{max-height:62vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.reorder-tip{font-size:13px;color:var(--ink-3);margin:2px 2px 14px;line-height:1.5}
+.cat-reorder-list{display:flex;flex-direction:column;gap:10px;padding:2px}
+.cat-reorder-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 14px;border-radius:14px;
+  background:var(--surface-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+  user-select:none;-webkit-user-select:none;touch-action:none;
+}
+.cat-reorder-item.is-dragging{opacity:.35}
+.cat-reorder-item .reorder-handle{
+  flex:none;width:34px;text-align:center;color:var(--ink-3);
+  font-size:20px;line-height:1;letter-spacing:-3px;cursor:grab;
+}
+.cat-reorder-item .reorder-handle:active{cursor:grabbing}
+.cat-reorder-item .reorder-name{font-size:15px;font-weight:500;flex:1}
+.cat-reorder-item.is-ghost{
+  position:fixed;z-index:200;pointer-events:none;
+  box-shadow:0 14px 30px rgba(60,66,54,.30);
+  background:var(--surface);opacity:.97;
+}
+
 /* 单品长按操作菜单 */
 .modal-card-menu{max-width:260px;border-radius:18px;align-self:center;justify-self:center;margin:auto;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .card-menu-body{padding:10px 16px 18px;display:flex;flex-direction:column;gap:2px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

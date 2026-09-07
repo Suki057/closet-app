@@ -467,6 +467,16 @@
         e_pressId = e.pointerId;
         state.railDragged = false;
         var chip = e.target.closest('.chip[data-cat]');
+        // 总分类（全部）长按 → 弹窗内排序（两种模式通用）
+        if (chip && chip.dataset.cat === 'all') {
+          clearLongPress();
+          sort.timer = setTimeout(function () { CL.openCategoryReorder('beauty'); }, LONG_PRESS);
+          scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
+          scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
+          rail.style.cursor = 'grabbing';
+          if (scroll.raf) { cancelAnimationFrame(scroll.raf); scroll.raf = null; }
+          return;
+        }
         // 管理模式下：长按某个分类 → 弹出删除确认框
         if (state.manageMode) {
           if (chip && chip.dataset.cat !== 'all' && !chip.classList.contains('is-editing')) {

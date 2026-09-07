@@ -46,6 +46,99 @@
   };
   CL.ui = ui;
 
+  /* ---------------- 分类顺序弹窗排序 ---------------- */
+  function hx(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  // slot: 'top'（衣橱）/ 'beauty'（彩妆护肤）
+  CL.openCategoryReorder = function (slot) {
+    slot = slot === 'beauty' ? 'beauty' : 'top';
+    var list = $('cat-reorder-list');
+    if (!list) return;
+    var ids = CL.catalog.CATEGORIES.filter(function (c) {
+      var isBeauty = String(c.id).indexOf('beauty-') === 0;
+      return slot === 'beauty' ? isBeauty : !isBeauty;
+    }).map(function (c) { return c.id; });
+    list.innerHTML = ids.map(function (id) {
+      var c = CL.catalog.get(id);
+      return '<div class="cat-reorder-item" data-cat="' + id + '">' +
+        '<span class="reorder-handle" aria-hidden="true">⋮⋮</span>' +
+        '<span class="reorder-name">' + hx(c ? c.name : id) + '</span>' +
+      '</div>';
+    }).join('');
+
+    CL.ui.openModal('cat-reorder-modal');
+
+    function onSave() {
+      var newOrder = Array.prototype.slice.call(list.querySelectorAll('.cat-reorder-item'))
+        .map(function (el) { return el.dataset.cat; });
+      var other = CL.catalog.CATEGORIES.filter(function (c) {
+        var isBeauty = String(c.id).indexOf('beauty-') === 0;
+        var inThis = slot === 'beauty' ? isBeauty : !isBeauty;
+        return !inThis;
+      }).map(function (c) { return c.id; });
+      var full = (slot === 'beauty') ? other.concat(newOrder) : newOrder.concat(other);
+      CL.catalog.setCategoryOrder(full);
+      CL.ui.closeModal('cat-reorder-modal');
+      if (slot === 'beauty') CL.beauty.render(); else CL.wardrobe.render();
+      CL.ui.toast('分类顺序已保存');
+    }
+    function onCancel() { CL.ui.closeModal('cat-reorder-modal'); }
+    $('btn-cat-reorder-save').onclick = onSave;
+    $('btn-cat-reorder-cancel').onclick = onCancel;
+
+    setupReorderDrag(list);
+  };
+
+  function setupReorderDrag(list) {
+    if (list._reorderBound) return;
+    list._reorderBound = true;
+    list.addEventListener('pointerdown', function (e) {
+      var handle = e.target.closest('.reorder-handle');
+      if (!handle) return; // 仅通过手柄拖动，避免与列表滚动冲突
+      var item = handle.closest('.cat-reorder-item');
+      if (!item) return;
+      e.preventDefault();
+      var startY = e.clientY;
+      var rect = item.getBoundingClientRect();
+      var clone = item.cloneNode(true);
+      clone.classList.add('is-ghost');
+      clone.style.width = rect.width + 'px';
+      document.body.appendChild(clone);
+      item.classList.add('is-dragging');
+      var offY = startY - rect.top;
+      var left = rect.left;
+      var y = startY;
+      function position() { clone.style.top = (y - offY) + 'px'; clone.style.left = left + 'px'; }
+      position();
+      function move(ev) {
+        y = ev.clientY;
+        position();
+        clone.style.visibility = 'hidden';
+        var elc = document.elementFromPoint(ev.clientX, ev.clientY);
+        clone.style.visibility = '';
+        var t = elc && elc.closest ? elc.closest('.cat-reorder-item') : null;
+        if (t && t !== item && list.contains(t)) {
+          var tr = t.getBoundingClientRect();
+          if (y > tr.top + tr.height / 2) list.insertBefore(item, t.nextSibling);
+          else list.insertBefore(item, t);
+        }
+      }
+      function up() {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
+        if (clone) clone.remove();
+        item.classList.remove('is-dragging');
+      }
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
+    });
+  }
+
   /* ---------------- 设置 ---------------- */
 
   var settings = {
