@@ -204,11 +204,8 @@
     var moveBtn = $('beauty-menu-move');
     if (moveBtn && it) moveBtn.textContent = it.location === 'home' ? '移到现居地' : '移到家里';
     CL.ui.openModal('beauty-menu-modal');
-    var card = $('beauty-menu-modal').querySelector('.modal-card');
-    if (card) {
-      card.setAttribute('tabindex', '-1');
-      requestAnimationFrame(function () { try { card.focus(); } catch (e) {} });
-    }
+    // 不再自动聚焦弹窗容器：手机端(long-press 手势刚结束)里程序化聚焦会"吃掉"用户第一次点击，
+    // 表现为「点编辑要点两次」。菜单打开后由用户主动点按钮，首项不会被误读为已选中。
   }
 
   function bind() {
@@ -329,7 +326,8 @@
       if (!longPress.timer) return;
       var dx = e.clientX - longPress.startX;
       var dy = e.clientY - longPress.startY;
-      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) clearLongPress();
+      // 容差放大到 18px：手机上手指轻微抖动不应取消长按（否则会退化成点击→直接打开编辑页）
+      if (Math.abs(dx) > 18 || Math.abs(dy) > 18) clearLongPress();
     });
     el.grid.addEventListener('pointerup', function () {
       var triggered = longPress.triggered;
@@ -346,6 +344,8 @@
 
     el.grid.addEventListener('click', function (e) {
       if (state.suppressClick) { e.stopPropagation(); return; }
+      // 菜单已打开时，任何落到网格上的杂散点击都忽略（防止长按松手后的幽灵点击穿透到卡片、误开编辑页）
+      if (!$('beauty-menu-modal').hidden) { e.stopPropagation(); return; }
       var card = e.target.closest('.card');
       if (!card) return;
       CL.wardrobe.openItem(card.dataset.id);
