@@ -146,6 +146,7 @@
         color: data.color || '#C9C2B8',
         colors: data.colors || [],
         tags: data.tags || [],
+        quantity: (data.quantity && data.quantity > 0) ? data.quantity : 1,
         favorite: false,
         createdAt: Date.now()
       });

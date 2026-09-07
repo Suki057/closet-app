@@ -88,9 +88,11 @@
   }
 
   function cardHtml(i) {
+    var qty = (i.quantity && i.quantity > 0) ? i.quantity : 1;
     return '<article class="card card-pure" data-id="' + i.id + '">' +
       '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" onerror="this.parentElement.classList.add(\'no-img\')">' +
         (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
+        (qty > 1 ? '<span class="card-qty">×' + qty + '</span>' : '') +
       '</div>' +
       '<div class="card-name">' + esc(i.name) + '</div>' +
     '</article>';

@@ -109,10 +109,13 @@
       return;
     }
     el.grid.innerHTML = list.map(function (i) {
+      var qty = (i.quantity && i.quantity > 0) ? i.quantity : 1;
       return       '<article class="card card-pure' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
         '<div class="card-shot" data-name="' + esc(i.name) + '"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" decoding="async" onerror="this.closest(\'.card-shot\').classList.add(\'no-img\')">' +
           (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
+          (qty > 1 ? '<span class="card-qty">×' + qty + '</span>' : '') +
         '</div>' +
+        '<div class="card-name">' + esc(i.name) + '</div>' +
       '</article>';
     }).join('');
   }
@@ -134,6 +137,7 @@
     dimg.src = it.url;
     $('detail-name').value = it.name;
     $('detail-tags').value = (it.tags || []).join(', ');
+    $('detail-qty').value = (it.quantity && it.quantity > 0) ? it.quantity : 1;
     state.editingCat = it.category;
     state.editingSub = it.sub || null;
     var slot = (String(it.category).indexOf('beauty-') === 0) ? 'beauty' : 'top';
@@ -688,11 +692,14 @@
       var id = state.editing;
       if (!id) return;
       var tags = $('detail-tags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var qty = parseInt($('detail-qty').value, 10);
+      if (!qty || qty < 1) qty = 1;
       CL.store.updateItem(id, {
         name: $('detail-name').value.trim() || '未命名',
         category: state.editingCat,
         sub: state.editingSub,
-        tags: tags
+        tags: tags,
+        quantity: qty
       }).then(function () {
         CL.ui.closeModal('item-modal');
         CL.ui.toast('已保存');
