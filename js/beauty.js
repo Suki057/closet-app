@@ -391,7 +391,7 @@
       var DRAG_PRESS = 480;        // 普通模式：长按进入拖动排序
       var MOVE_THRESHOLD = 10;
       var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
-      var sort = { timer: null, chip: null };
+      var sort = { timer: null, chip: null, lpReorder: false };
       // 拖动排序状态
       var reorder = { timer: null, chip: null, startX: 0, startY: 0, clone: null, offX: 0, offY: 0, active: false };
 
@@ -470,7 +470,11 @@
         // 总分类（全部）长按 → 弹窗内排序（两种模式通用）
         if (chip && chip.dataset.cat === 'all') {
           clearLongPress();
-          sort.timer = setTimeout(function () { CL.openCategoryReorder('beauty'); }, LONG_PRESS);
+          sort.lpReorder = true;
+          sort.timer = setTimeout(function () {
+            sort.lpReorder = false;
+            CL.openCategoryReorder('beauty');
+          }, LONG_PRESS);
           scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
           scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
           rail.style.cursor = 'grabbing';
@@ -505,6 +509,12 @@
 
       rail.addEventListener('pointermove', function (e) {
         if (reorder.active) { onDragMove(e.clientX, e.clientY); try { e.preventDefault(); } catch (err) {} return; }
+        if (sort.lpReorder) {
+          // 「全部」长按照：仅明显滑动（>26px）才取消，避免手指抖动/系统误清
+          var ldx = e.clientX - scroll.startX, ldy = e.clientY - scroll.startY;
+          if (Math.abs(ldx) > 26 || Math.abs(ldy) > 26) { clearLongPress(); sort.lpReorder = false; }
+          else return;
+        }
         if (!scroll.isDown) return;
         var dx = e.clientX - scroll.startX;
         var dy = e.clientY - scroll.startY;
@@ -530,6 +540,7 @@
       }
       rail.addEventListener('pointerup', finishPress);
       rail.addEventListener('pointercancel', function () {
+        if (sort.lpReorder) return; // 长按照期间系统取消指针，保留定时器让其触发弹窗
         clearLongPress();
         clearReorderTimer();
         if (reorder.active) endReorder();
@@ -537,6 +548,15 @@
       });
       rail.addEventListener('pointerleave', function () {
         if (!sort.active && !reorder.active) { scroll.isDown = false; rail.style.cursor = ''; }
+      });
+      // 移动端长按系统菜单（contextmenu）作为可靠触发：手指按住「全部」即弹出排序弹窗
+      rail.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        if (sort.lpReorder) {
+          clearLongPress();
+          sort.lpReorder = false;
+          CL.openCategoryReorder('beauty');
+        }
       });
     })(el.cats);
 

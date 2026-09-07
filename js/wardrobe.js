@@ -420,7 +420,7 @@
       var LONG_PRESS = 500;
       var MOVE_THRESHOLD = 10;
       var scroll = { isDown: false, startX: 0, scrollLeft: 0, vel: 0, raf: null, lastT: 0, lastSL: 0 };
-      var sort = { active: false, timer: null, chip: null, id: null, order: [], startX: 0, startY: 0, pointerId: null };
+      var sort = { active: false, timer: null, chip: null, id: null, order: [], startX: 0, startY: 0, pointerId: null, lpReorder: false };
 
       function decay() {
         if (Math.abs(scroll.vel) < 0.5) { scroll.raf = null; return; }
@@ -484,7 +484,11 @@
         var chip = e.target.closest('.chip[data-cat]');
         if (chip && chip.dataset.cat === 'all') {
           clearLongPress();
-          sort.timer = setTimeout(function () { CL.openCategoryReorder('top'); }, LONG_PRESS);
+          sort.lpReorder = true;
+          sort.timer = setTimeout(function () {
+            sort.lpReorder = false;
+            CL.openCategoryReorder('top');
+          }, LONG_PRESS);
           // 仍允许横向滚动
           scroll.isDown = true; scroll.startX = e.clientX; scroll.scrollLeft = rail.scrollLeft;
           scroll.vel = 0; scroll.lastT = Date.now(); scroll.lastSL = scroll.scrollLeft;
@@ -543,6 +547,12 @@
           reorder(sort.id, idx);
           return;
         }
+        if (sort.lpReorder) {
+          // 「全部」长按照：仅明显滑动（>26px）才取消，避免手指抖动/系统 pointercancel 误清
+          var ldx = e.clientX - sort.startX, ldy = e.clientY - sort.startY;
+          if (Math.abs(ldx) > 26 || Math.abs(ldy) > 26) { clearLongPress(); sort.lpReorder = false; }
+          else return; // 抖动态不滚动、不取消
+        }
         if (!scroll.isDown) return;
         var dx = e.clientX - sort.startX;
         var dy = e.clientY - sort.startY;
@@ -569,12 +579,22 @@
         scroll.raf = requestAnimationFrame(decay);
       });
       rail.addEventListener('pointercancel', function (e) {
+        if (sort.lpReorder) return; // 长按照期间系统取消指针，保留定时器让其触发弹窗
         clearLongPress();
         if (sort.active) exitSort();
         scroll.isDown = false; rail.style.cursor = '';
       });
       rail.addEventListener('pointerleave', function () {
         if (!sort.active) { scroll.isDown = false; rail.style.cursor = ''; }
+      });
+      // 移动端长按系统菜单（contextmenu）作为可靠触发：手指按住「全部」即弹出排序弹窗
+      rail.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        if (sort.lpReorder) {
+          clearLongPress();
+          sort.lpReorder = false;
+          CL.openCategoryReorder('top');
+        }
       });
     })(el.cats);
 

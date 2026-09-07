@@ -281,7 +281,7 @@ button{cursor:pointer;border:none;background:none}
   z-index:10;cursor:grabbing;
 }
 .cat-bottom-bar .cat-rail{touch-action:pan-x}
-.cat-bottom-bar .chip{touch-action:pan-x;user-select:none;-webkit-user-select:none;position:relative}
+.cat-bottom-bar .chip{touch-action:pan-x;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;position:relative}
 .cat-bottom-bar .sub-rail .sub-chip{position:relative}
 .cat-bottom-bar .sub-rail .sub-chip.is-managing{padding-left:24px}
 /* 长按拖拽排序时的浮动克隆体 */
