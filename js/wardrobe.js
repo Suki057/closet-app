@@ -111,7 +111,7 @@
     el.grid.innerHTML = list.map(function (i) {
       var qty = (i.quantity && i.quantity > 0) ? i.quantity : 1;
       return       '<article class="card card-pure' + (i.favorite ? ' is-fav' : '') + '" data-id="' + i.id + '">' +
-        '<div class="card-shot" data-name="' + esc(i.name) + '"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" decoding="async" onerror="this.closest(\'.card-shot\').classList.add(\'no-img\')">' +
+        '<div class="card-shot" data-name="' + esc(i.name) + '"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy" decoding="async" onerror="this.closest(\'.card-shot\').classList.add(\'no-img\')">' +
           (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
           (qty > 1 ? '<span class="card-qty">×' + qty + '</span>' : '') +
         '</div>' +
@@ -691,24 +691,24 @@
       var tags = $('detail-tags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
       var qty = parseInt($('detail-qty').value, 10);
       if (!qty || qty < 1) qty = 1;
-      CL.store.updateItem(id, {
+      var patch = {
         name: $('detail-name').value.trim() || '未命名',
         category: state.editingCat,
         sub: state.editingSub,
         tags: tags,
         quantity: qty
-      }).then(function () {
-        CL.ui.closeModal('item-modal');
-        CL.ui.toast('已保存');
-      });
+      };
+      CL.ui.closeModal('item-modal');   // 立即关闭，不等 IndexedDB 写大图完成，避免点击保存后长时间无响应
+      CL.ui.toast('已保存');
+      CL.store.updateItem(id, patch);   // 后台写入；emit 触发的重绘在后台进行，不阻塞交互
     });
 
     $('btn-delete-item').addEventListener('click', function () {
       var id = state.editing;
       if (!id) return;
       CL.studio.takeOffItem(id);
+      CL.ui.closeModal('item-modal');
       CL.store.deleteItem(id).then(function () {
-        CL.ui.closeModal('item-modal');
         CL.ui.toast('已移入回收站（可在回收站恢复）');
       });
     });

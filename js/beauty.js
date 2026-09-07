@@ -90,7 +90,7 @@
   function cardHtml(i) {
     var qty = (i.quantity && i.quantity > 0) ? i.quantity : 1;
     return '<article class="card card-pure" data-id="' + i.id + '">' +
-      '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" onerror="this.parentElement.classList.add(\'no-img\')">' +
+      '<div class="card-shot"><img src="' + i.thumbUrl + '" alt="' + esc(i.name) + '" loading="lazy" decoding="async" onerror="this.parentElement.classList.add(\'no-img\')">' +
         (i.location ? '<span class="card-loc ' + (i.location === 'home' ? 'is-home' : 'is-res') + '">' + (i.location === 'home' ? '家' : '居') + '</span>' : '') +
         (qty > 1 ? '<span class="card-qty">×' + qty + '</span>' : '') +
       '</div>' +
@@ -112,15 +112,23 @@
     el.placeRes.classList.toggle('is-active', state.loc === 'residence');
   }
 
+  var lastGridKey = '';
   function render() {
     renderPlaces();
     renderCats();
     if (!state.loc) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>请选择地点</h3><p>点击「家里」或「现居地」查看对应库存。</p></div>';
       el.empty.hidden = true;
+      lastGridKey = '__needloc';
       return;
     }
     var list = filtered();
+    // 可见集合签名：当前筛选下实际显示的单品集合没变，则不重绘图片网格，
+    // 避免 emit('items')（例如在衣橱保存/编辑单品）连锁触发本板块重复解码全部图片导致卡顿
+    var key = state.cat + '|' + state.sub + '|' + state.loc + '|' + state.q + '|' + list.length +
+      '#' + list.map(function (i) { return i.id; }).join(',');
+    if (key === lastGridKey) return;
+    lastGridKey = key;
     el.grid.innerHTML = list.map(cardHtml).join('');
     el.empty.hidden = list.length > 0;
   }
