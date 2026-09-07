@@ -125,43 +125,7 @@
     el.empty.hidden = list.length > 0;
   }
 
-  /* 内联改名：双击分类标题后，在底部栏直接编辑并确认 */
-  function startRename(chip) {
-    var id = chip.dataset.cat;
-    if (!id || id === 'all') return;
-    var c = CL.catalog.get(id);
-    if (!c || chip.classList.contains('is-editing')) return;
-    chip.classList.add('is-editing');
-    var nameSpan = chip.querySelector('.chip-name');
-    var input = document.createElement('input');
-    input.className = 'chip-edit';
-    input.value = c.name;
-    input.setAttribute('aria-label', '修改分类名称');
-    if (nameSpan) nameSpan.parentNode.replaceChild(input, nameSpan);
-    var ok = document.createElement('span');
-    ok.className = 'chip-ok';
-    ok.dataset.act = 'rename-ok';
-    ok.textContent = '确定';
-    chip.appendChild(ok);
-
-    var finished = false;
-    function commit(save) {
-      if (finished) return;
-      finished = true;
-      var v = input.value.trim();
-      chip.classList.remove('is-editing');
-      if (save && v) CL.catalog.renameCategory(id, v);
-      renderCats(); // 仅刷新底部栏（分类名变化），网格不受影响
-    }
-    input.focus();
-    try { input.select(); } catch (e) {}
-    ok.addEventListener('click', function (e) { e.stopPropagation(); commit(true); });
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
-      else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
-    });
-    input.addEventListener('blur', function () { commit(true); });
-  }
+  /* 分类改名改由弹窗（CL.openCategoryRename）处理，双击底部栏分类触发 */
 
   /* 弹出确认框：确认后单品归入「未分类」、分类被移除（单品数据不丢、不复制大图） */
   function confirmDeleteCategory(id) {
@@ -245,7 +209,7 @@
       var now = Date.now();
       if (cat !== 'all' && lastTap.cat === cat && now - lastTap.t < 350) {
         lastTap.t = 0; lastTap.cat = null;
-        startRename(b);
+        CL.openCategoryRename('beauty', cat);
         return;
       }
       lastTap = { t: now, cat: cat };

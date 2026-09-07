@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=68">
+<link rel="stylesheet" href="css/style.css?v=69">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8FA389">
 <meta name="mobile-web-app-capable" content="yes">
@@ -542,6 +542,28 @@
   </div>
 </div>
 
+<!-- ============ 分类改名弹窗 ============ -->
+<div class="modal" id="cat-rename-modal" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card">
+    <header class="modal-head">
+      <h3>修改分类名称</h3>
+      <button class="icon-btn" data-close><svg viewBox="0 0 24 24" class="ico"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </header>
+    <div class="modal-body" style="padding:18px 20px">
+      <label class="field">
+        <span class="field-label">名称</span>
+        <input type="text" id="cat-rename-input" placeholder="输入新的分类名称" autocomplete="off">
+      </label>
+      <p class="reorder-tip" style="margin-bottom:0">该分类下的单品会自动同步更新为新名称。</p>
+    </div>
+    <footer class="modal-foot spread">
+      <button class="btn btn-soft" data-close>取消</button>
+      <button class="btn btn-primary" id="btn-cat-rename-save">保存</button>
+    </footer>
+  </div>
+</div>
+
 <!-- ============ 设置 ============ -->
 <div class="modal" id="settings-modal" hidden>
   <div class="modal-mask" data-close></div>
@@ -587,12 +609,12 @@
 <script src="js/catalog.js?v=12"></script>
 <script src="js/segment.js?v=6"></script>
 <script src="js/store.js?v=17"></script>
-<script src="js/wardrobe.js?v=35"></script>
+<script src="js/wardrobe.js?v=36"></script>
 <script src="js/studio.js?v=4"></script>
 <script src="js/looks.js?v=2"></script>
-<script src="js/beauty.js?v=7"></script>
+<script src="js/beauty.js?v=8"></script>
 <script src="js/trash.js?v=7"></script>
-<script src="js/app.js?v=18"></script>
+<script src="js/app.js?v=19"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

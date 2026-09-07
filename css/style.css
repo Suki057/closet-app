@@ -676,11 +676,13 @@ button{cursor:pointer;border:none;background:none}
   background:var(--surface-2);
   box-shadow:inset 0 0 0 1px var(--line);
   user-select:none;-webkit-user-select:none;touch-action:none;
+  transition:transform .18s ease;will-change:transform;
 }
-.cat-reorder-item.is-dragging{opacity:.35}
+.cat-reorder-item.is-dragging{opacity:.35;transition:none}
 .cat-reorder-item .reorder-handle{
   flex:none;width:34px;text-align:center;color:var(--ink-3);
   font-size:20px;line-height:1;letter-spacing:-3px;cursor:grab;
+  touch-action:none;
 }
 .cat-reorder-item .reorder-handle:active{cursor:grabbing}
 .cat-reorder-item .reorder-name{font-size:15px;font-weight:500;flex:1}

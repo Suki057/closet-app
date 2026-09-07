@@ -95,49 +95,98 @@
   function setupReorderDrag(list) {
     if (list._reorderBound) return;
     list._reorderBound = true;
+    var drag = null;
     list.addEventListener('pointerdown', function (e) {
       var handle = e.target.closest('.reorder-handle');
       if (!handle) return; // 仅通过手柄拖动，避免与列表滚动冲突
       var item = handle.closest('.cat-reorder-item');
       if (!item) return;
       e.preventDefault();
-      var startY = e.clientY;
       var rect = item.getBoundingClientRect();
       var clone = item.cloneNode(true);
       clone.classList.add('is-ghost');
       clone.style.width = rect.width + 'px';
       document.body.appendChild(clone);
       item.classList.add('is-dragging');
-      var offY = startY - rect.top;
-      var left = rect.left;
-      var y = startY;
-      function position() { clone.style.top = (y - offY) + 'px'; clone.style.left = left + 'px'; }
-      position();
-      function move(ev) {
-        y = ev.clientY;
-        position();
-        clone.style.visibility = 'hidden';
-        var elc = document.elementFromPoint(ev.clientX, ev.clientY);
-        clone.style.visibility = '';
-        var t = elc && elc.closest ? elc.closest('.cat-reorder-item') : null;
-        if (t && t !== item && list.contains(t)) {
-          var tr = t.getBoundingClientRect();
-          if (y > tr.top + tr.height / 2) list.insertBefore(item, t.nextSibling);
-          else list.insertBefore(item, t);
+      drag = { item: item, clone: clone, offY: e.clientY - rect.top, left: rect.left, y: e.clientY, raf: null, dirty: false };
+
+      function positionClone() {
+        drag.clone.style.top = (drag.y - drag.offY) + 'px';
+        drag.clone.style.left = drag.left + 'px';
+      }
+      // 计算目标插入位置并用 FLIP 让兄弟项平滑滑动，避免生硬跳变
+      function reorder() {
+        drag.raf = null;
+        if (!drag.dirty) return;
+        drag.dirty = false;
+        var py = drag.y;
+        var sibs = Array.prototype.slice.call(list.children).filter(function (c) { return c !== drag.item; });
+        var target = null;
+        for (var i = 0; i < sibs.length; i++) {
+          var r = sibs[i].getBoundingClientRect();
+          if (py < r.top + r.height / 2) { target = sibs[i]; break; }
         }
+        var cur = Array.prototype.indexOf.call(list.children, drag.item);
+        var tgt = target ? Array.prototype.indexOf.call(list.children, target) : list.children.length;
+        if (tgt === cur || tgt === cur + 1) return; // 已在正确位置
+        var first = {};
+        Array.prototype.forEach.call(list.children, function (el) { first[el.dataset.cat] = el.getBoundingClientRect().top; });
+        if (target) list.insertBefore(drag.item, target);
+        else list.appendChild(drag.item);
+        Array.prototype.forEach.call(list.children, function (el) {
+          var last = el.getBoundingClientRect().top;
+          var dy = (first[el.dataset.cat] != null ? first[el.dataset.cat] : last) - last;
+          if (Math.abs(dy) > 0.5) {
+            el.style.transition = 'none';
+            el.style.transform = 'translateY(' + dy + 'px)';
+            requestAnimationFrame(function () {
+              el.style.transition = 'transform .18s ease';
+              el.style.transform = '';
+            });
+          }
+        });
       }
-      function up() {
-        document.removeEventListener('pointermove', move);
-        document.removeEventListener('pointerup', up);
-        document.removeEventListener('pointercancel', up);
-        if (clone) clone.remove();
-        item.classList.remove('is-dragging');
+      function onMove(ev) {
+        drag.y = ev.clientY;
+        drag.dirty = true;
+        positionClone();
+        if (!drag.raf) drag.raf = requestAnimationFrame(reorder);
       }
-      document.addEventListener('pointermove', move);
-      document.addEventListener('pointerup', up);
-      document.addEventListener('pointercancel', up);
+      function onUp() {
+        if (drag.raf) cancelAnimationFrame(drag.raf);
+        if (drag.clone) drag.clone.remove();
+        drag.item.classList.remove('is-dragging');
+        // 清掉重排残留的内联 transform/transition，避免影响后续渲染
+        Array.prototype.forEach.call(list.children, function (el) { el.style.transition = ''; el.style.transform = ''; });
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        drag = null;
+      }
+      positionClone();
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
     });
   }
+
+  /* ---------------- 分类改名弹窗（双击底部栏分类触发） ---------------- */
+  CL.openCategoryRename = function (slot, catId) {
+    slot = slot === 'beauty' ? 'beauty' : 'top';
+    var c = CL.catalog.get(catId);
+    if (!c) return;
+    var input = $('cat-rename-input');
+    input.value = c.name;
+    CL.ui.openModal('cat-rename-modal');
+    setTimeout(function () { try { input.focus(); input.select(); } catch (e) {} }, 60);
+    $('btn-cat-rename-save').onclick = function () {
+      var v = input.value.trim();
+      if (v) CL.catalog.renameCategory(catId, v); // 按 id 改名，单品以 id 关联，自动同步显示新名称
+      CL.ui.closeModal('cat-rename-modal');
+      if (slot === 'beauty') CL.beauty.render(); else CL.wardrobe.render();
+      CL.ui.toast('分类名称已更新');
+    };
+  };
 
   /* ---------------- 设置 ---------------- */
 
