@@ -357,6 +357,8 @@ button{cursor:pointer;border:none;background:none}
   position:relative;background:var(--surface);border-radius:var(--radius);
   box-shadow:var(--shadow-1);overflow:hidden;transition:.2s;cursor:pointer;
   box-shadow:inset 0 0 0 1px var(--line);
+  /* 成熟列表优化：离屏卡片跳过布局/绘制，长列表滚动与首屏渲染几乎零成本 */
+  content-visibility:auto;contain-intrinsic-size:auto 230px;
 }
 .card:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px var(--gold-line),0 14px 30px rgba(90,100,80,.40)}
 .card-shot{

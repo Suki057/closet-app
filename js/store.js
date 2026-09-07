@@ -87,9 +87,8 @@
           }
         });
         emit('items'); emit('looks'); emit('trash');
-        // 后台批量把旧单品的"原图即缩略图"降级为真正小图（不阻塞首屏）
-        if (global.CL && CL.makeThumb) CL.store.migrateThumbs();
-        else setTimeout(function () { if (global.CL && CL.makeThumb) CL.store.migrateThumbs(); }, 500);
+        // 旧单品的"原图即缩略图"不再启动时批量解码（会抢占手机 CPU 导致卡顿），
+        // 改为卡片进入视口 + 浏览器空闲时由渲染层调用 CL.store.requestThumb 懒降级。
         if (rescued.length) return db.bulkPut('items', rescued);
         return null;
       });
@@ -179,31 +178,42 @@
       db.put('items', o);
     },
 
-    /* 一次性迁移：旧数据里"原图即缩略图"的全尺寸图，降级成真正的小缩略图。
-       分批（每批 2 张、间隔 30ms）异步生成，避免卡 UI；生成后就地替换对应卡片图并存库，
-       不触发整页重渲染。CL.makeThumb 在 app.js 顶层挂载，init 时通常已就绪，否则短延时兜底。 */
-    migrateThumbs: function () {
-      var pending = items.filter(function (it) { return !it.deletedAt && it.thumbV !== 1; });
-      if (!pending.length) return;
-      var i = 0, self = this;
-      function step() {
-        if (!global.CL || !CL.makeThumb) { setTimeout(step, 200); return; }
-        var batch = pending.slice(i, i + 2);
-        i += 2;
-        batch.forEach(function (it) {
-          var src = it.imgFull || it.img;
-          if (!src) { it.thumbV = 1; return; }
-          CL.makeThumb(src, 480, 0.72).then(function (thumb) {
-            if (!thumb) { it.thumbV = 1; return; }
-            it.img = thumb; it.thumbUrl = thumb; it.thumbV = 1;
-            // 就地替换当前已在 DOM 中的卡片图（任何板块都覆盖）
-            document.querySelectorAll('.card[data-id="' + it.id + '"] img').forEach(function (im) { im.src = thumb; });
-            self.saveThumb(it.id, thumb);
-          });
-        });
-        if (i < pending.length) setTimeout(step, 30);
-      }
-      step();
+    /* 懒迁移：旧单品"原图即缩略图"的全尺寸图，按"进入视口 + 浏览器空闲"逐个降级为小图。
+       不再启动时全局批量解码（那会抢占手机 CPU 导致整体卡顿），而是谁被看到、且浏览器空闲时才处理，
+       处理完就地替换卡片图并存库，不触发整页重绘。CL.makeThumb 在 app.js 顶层挂载。 */
+    _thumbQ: [],
+    _thumbBusy: false,
+    _pumpThumbs: function () {
+      var self = this;
+      if (self._thumbBusy) return;
+      var id = self._thumbQ.shift();
+      if (id === undefined) return;
+      var it = store.getItem(id);
+      if (!it || it.deletedAt || it.thumbV === 1) { self._pumpThumbs(); return; }
+      var src = it.imgFull || it.img;
+      if (!src) { it.thumbV = 1; self._pumpThumbs(); return; }
+      self._thumbBusy = true;
+      CL.makeThumb(src, 480, 0.72).then(function (thumb) {
+        if (thumb) {
+          it.img = thumb; it.thumbUrl = thumb; it.thumbV = 1;
+          var im = document.querySelector('.card[data-id="' + it.id + '"] img');
+          if (im) im.src = thumb;
+          self.saveThumb(it.id, thumb);
+        } else { it.thumbV = 1; }
+        self._thumbBusy = false;
+        if (self._thumbQ.length) {
+          if (window.requestIdleCallback) window.requestIdleCallback(function () { self._pumpThumbs(); }, { timeout: 1000 });
+          else setTimeout(function () { self._pumpThumbs(); }, 140);
+        }
+      });
+    },
+    /* 渲染层调用：某张卡片进入视口时登记，空闲时再降级，避免一次性解码全部大图卡 UI */
+    requestThumb: function (id) {
+      if (this._thumbQ.indexOf(id) !== -1) return;
+      this._thumbQ.push(id);
+      var self = this;
+      if (window.requestIdleCallback) window.requestIdleCallback(function () { self._pumpThumbs(); }, { timeout: 1000 });
+      else setTimeout(function () { self._pumpThumbs(); }, 140);
     },
 
     /* 批量改多个单品：内存改 + 仅 emit 一次（仅重渲染一次）+ 单事务批量写入。

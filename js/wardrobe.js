@@ -91,6 +91,16 @@
   }
 
   var lastGridKey = '';
+  /* 视口驱动：旧单品（未生成真缩略图）的卡片进入视口时才登记懒降级，避免一次性解码大图卡 UI */
+  var thumbObserver = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        var id = en.target.getAttribute('data-id');
+        if (id) CL.store.requestThumb(id);
+        thumbObserver.unobserve(en.target);
+      }
+    });
+  }, { rootMargin: '300px' }) : null;
   function renderGrid() {
     if (!state.loc) {
       el.grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>请选择地点</h3><p>点击「家里」或「现居地」查看对应库存。</p></div>';
@@ -118,6 +128,14 @@
         '<div class="card-name">' + esc(i.name) + '</div>' +
       '</article>';
     }).join('');
+    // 给未降级（仍是全尺寸原图）的卡片登记懒缩略图：进入视口 + 浏览器空闲时才解码，不卡 UI
+    if (thumbObserver) {
+      thumbObserver.disconnect();
+      el.grid.querySelectorAll('.card[data-id]').forEach(function (card) {
+        var it = CL.store.getItem(card.getAttribute('data-id'));
+        if (it && it.thumbV !== 1) thumbObserver.observe(card);
+      });
+    }
   }
 
   function render() {
